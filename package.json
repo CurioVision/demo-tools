@@ -1,42 +1,17 @@
 {
-  "name": "node-command-line-starter",
-  "version": "2.0.0",
-  "description": "Starter to create node-command-line utilities",
+  "name": "demo-tools",
+  "version": "1.0.0",
+  "description": "Command line utility for preparing BridalLive demo data",
   "main": "index.js",
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-    }
-  },
-  "lint-staged": {
-    "{src,__mocks__,bin}/**/*.ts": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "@commitlint/prompt"
-    }
-  },
   "scripts": {
     "build": "tsc",
-    "commit": "git-cz",
     "format:check": "prettier --list-different '{src,__mocks__,bin}/**/*.js'",
     "format:write": "prettier --write '{src,__mocks__,bin}/**/*.js'",
     "start:help": "ts-node bin/order.bin.ts -h",
     "start:example": "ts-node bin/order.bin.ts pizza beer",
     "test": "jest",
-    "bump-version": "rjp package.json version $VERSION",
     "test:coverage": "jest --coverage",
-    "report:coverage": "npm run test:coverage && codecov",
-    "semantic-release": "semantic-release"
+    "report:coverage": "npm run test:coverage && codecov"
   },
   "bin": {
     "node-command-line-starter": "./src/bin/order.bin.js",
@@ -44,20 +19,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kreuzerk/node-command-line-starter.git"
+    "url": "https://github.com/CurioVision/demo-tools"
   },
-  "keywords": [
-    "CLI",
-    "Replace",
-    "JSON",
-    "Buildtool",
-    "Starter"
-  ],
-  "author": "Kevin Kreuzer",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/kreuzerk/node-command-line-starter/issues"
-  },
+  "author": "Matt Gabor",
   "homepage": "https://github.com/kreuzerk/node-command-line-starter#readme",
   "dependencies": {
     "boxen": "^2.1.0",
@@ -65,22 +29,13 @@
     "jsonfile": "^5.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^7.5.2",
-    "@commitlint/config-conventional": "^7.5.0",
-    "@commitlint/prompt": "^7.5.0",
-    "@semantic-release/changelog": "^3.0.1",
-    "@semantic-release/exec": "^3.3.2",
-    "@semantic-release/git": "^7.0.6",
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.3",
     "codecov": "^3.1.0",
-    "commitizen": "^3.0.5",
-    "husky": "^1.2.1",
     "jest": "^23.6.0",
     "lint-staged": "^8.1.0",
     "prettier": "^1.15.3",
     "replace-json-property": "^1.4.1",
-    "semantic-release": "^15.13.3",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
     "typescript": "^3.6.2"
