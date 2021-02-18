@@ -895,6 +895,45 @@ export interface BridalLivePayment {
   yearMonth: string
 }
 
+export interface BridalLiveVendor {
+  accountNumber: string
+  address1: string
+  address2: string
+  city: string
+  code: string
+  colorGroups: any[]
+  country: string
+  createdByUser: string
+  createdDate: string
+  displayOnLookbook: boolean
+  emailAddress: string
+  faxNumber: string
+  id: number
+  imageUrl: string
+  isVendorVisibleOnLookbook: string
+  marketplaceId: number
+  modifiedByUser: string
+  modifiedDate: string
+  modifiedDateAfter: string
+  name: string
+  notes: string
+  phoneNumber: string
+  qbListId: string
+  retailerId: string
+  retailerIds: any[]
+  retailerName: string
+  sizeGroups: any[]
+  smartMatchIgnored: boolean
+  state: string
+  status: string
+  tokenRetailerId: string
+  vatNumber: string
+  vatPercent: number
+  version: number
+  websiteUrl: string
+  zip: string
+}
+
 export interface LookbookAttribute extends BaseBridalLiveObject {
   // 17820
   version: number // 0

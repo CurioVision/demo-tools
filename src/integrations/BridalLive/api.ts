@@ -14,6 +14,7 @@ import {
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucher,
   BridalLiveToken,
+  BridalLiveVendor,
   FullBridalLiveItem,
   ItemListCriteria,
 } from './apiTypes'
@@ -163,6 +164,16 @@ const PAYMENTS_ENDPOINTS = {
 const CONTACTS_ENDPOINTS = {
   allContacts: '/bl-server/api/contacts/list?page=0',
   deleteContact: '/bl-server/api/contacts',
+}
+
+/**
+ * BridalLive `vendor-controller`:
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/vendor-controller
+ */
+const VENDORS_ENDPOINTS = {
+  allVendors: '/bl-server/api/vendors/list?page=0',
+  deleteVendor: '/bl-server/api/vendors',
 }
 
 const DATE_CRITERIA_FORMAT = 'YYYY-MM-DD'
@@ -914,6 +925,75 @@ const deleteContact = async (
 }
 
 /**
+ * Fetch BridalLive vendors. Uses the vendors/list endpoint and returns the result.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-controller/listUsingPOST_52
+ * @param token BridalLive token used to authenticate the request
+ * @param filterCriteria POST request body
+ */
+const fetchAllVendors = async (
+  token: BridalLiveToken,
+  filterCriteria: ItemListCriteria
+): Promise<BridalLiveVendor> => {
+  if (!token || token === '') {
+    throw new Error('Cannot fetch Vendor list data without a valid token')
+  }
+
+  return fetch(BL_ROOT_URL + VENDORS_ENDPOINTS.allVendors, {
+    method: 'POST',
+    body: JSON.stringify(filterCriteria),
+    headers: {
+      'Content-Type': 'application/json',
+      token: token,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.result) return data.result as BridalLiveVendor[]
+    })
+    .catch(() => {
+      throw new Error('Failed to fetch Purchase Order list data')
+    })
+}
+
+/**
+ * Detele BridalLive vendor by id. Uses the vendors/{id} endpoint.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/vendor-controller/deleteUsingDELETE_32
+ * @param token BridalLive token used to authenticate the request
+ * @param vendorId ID of the vendor to fetch
+ */
+const deleteVendor = async (
+  token: BridalLiveToken,
+  vendorId: string | number
+): Promise<BridalLiveVendor> => {
+  if (!token || token === '') {
+    logError('Cannot delete Vendor data without a valid token', null)
+    throw new Error('Cannot delete Vendor data without a valid token')
+  }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
+
+  return fetch(
+    BL_ROOT_URL + `${VENDORS_ENDPOINTS.deleteVendor}/${vendorId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+    }
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
+}
+
+/**
  * Fetch BridalLiveCompany item for retailerId and apiKey.
  * Uses the BridalLive `company-controller`:
  *
@@ -991,5 +1071,7 @@ export default {
   deletePayment,
   fetchAllContacts,
   deleteContact,
+  fetchAllVendors,
+  deleteVendor,
   fetchBridalLiveCompany,
 }

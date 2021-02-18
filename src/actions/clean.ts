@@ -46,6 +46,13 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.fetchAllItems,
       BridalLiveApi.deleteItem
     )
+    // fetch and delete vendors
+    await fetchAllAndDelete(
+      'vendor',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllVendors,
+      BridalLiveApi.deleteVendor
+    )
     // fetch and delete contacts
     await fetchAllAndDelete(
       'contact',
@@ -69,9 +76,9 @@ const fetchAllAndDelete = async (
   logInfo(`Fetching all ${itemType}s`)
   const items: BaseBridalLiveObject[] = await fetchAllFn(token, fetchAllFilter)
   if (items && items.length > 0) {
-    logInfo(`Found ${items.length} ${itemType}s that need to be deleted`)
+    logInfo(`...found ${items.length} ${itemType}s that need to be deleted`)
   } else {
-    logInfo(`\tNo ${itemType}s need to be deleted`)
+    logInfo(`...no ${itemType}s need to be deleted`)
   }
   for (const item of items) {
     try {
