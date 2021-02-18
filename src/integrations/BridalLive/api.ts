@@ -306,15 +306,13 @@ const deleteItem = async (
       },
       body: {},
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.errors && data.errors.length > 0) {
-        throw data
-      } else {
-        return data
-      }
-    })
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
 }
 
 const updateItem = async (
@@ -421,15 +419,13 @@ const deletePurchaseOrder = async (
       },
       body: {},
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.errors && data.errors.length > 0) {
-        throw data
-      } else {
-        return data
-      }
-    })
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
 }
 
 const createPurchaseOrderForItems = async (
@@ -655,15 +651,13 @@ const deleteReceivingVoucher = async (
         token: token,
       },
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.errors && data.errors.length > 0) {
-        throw data
-      } else {
-        return data
-      }
-    })
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
 }
 
 const completeReceivingVoucher = async (
@@ -771,15 +765,13 @@ const deletePosTransaction = async (
         token: token,
       },
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.errors && data.errors.length > 0) {
-        throw data
-      } else {
-        return data
-      }
-    })
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
 }
 
 /**
@@ -843,15 +835,13 @@ const deletePayment = async (
       },
       body: {},
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.errors && data.errors.length > 0) {
-        throw data
-      } else {
-        return data
-      }
-    })
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
 }
 
 /**
@@ -914,15 +904,13 @@ const deleteContact = async (
         token: token,
       },
     }
-  )
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.errors && data.errors.length > 0) {
-        throw data
-      } else {
-        return data
-      }
-    })
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
 }
 
 /**

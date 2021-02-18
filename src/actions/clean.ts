@@ -69,7 +69,7 @@ const fetchAllAndDelete = async (
   logInfo(`Fetching all ${itemType}s`)
   const items: BaseBridalLiveObject[] = await fetchAllFn(token, fetchAllFilter)
   if (items && items.length > 0) {
-    logInfo(`\tFound ${items.length} ${itemType}s that need to be deleted`)
+    logInfo(`Found ${items.length} ${itemType}s that need to be deleted`)
   } else {
     logInfo(`\tNo ${itemType}s need to be deleted`)
   }
@@ -77,7 +77,7 @@ const fetchAllAndDelete = async (
     try {
       logInfo(`\tAttempting to delete ${itemType} with id: ${item.id}`)
       await deleteFn(token, item.id)
-      logInfo(`\t... deleted ${item.id}`)
+      logInfo(`\t...deleted ${item.id}`)
     } catch (error) {
       logError(`Error while deleting ${itemType}`, error)
     }
