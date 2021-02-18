@@ -7,15 +7,14 @@
     "build": "tsc",
     "format:check": "prettier --list-different '{src,__mocks__,bin}/**/*.js'",
     "format:write": "prettier --write '{src,__mocks__,bin}/**/*.js'",
-    "start:help": "ts-node bin/order.bin.ts -h",
-    "start:example": "ts-node bin/order.bin.ts pizza beer",
+    "demo:clean:help": "ts-node src/bin/clean.bin.ts -h",
+    "demo:clean": "ts-node src/bin/clean.bin.ts fa96bd3d 6d448f878611dca9",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "report:coverage": "npm run test:coverage && codecov"
   },
   "bin": {
-    "node-command-line-starter": "./src/bin/order.bin.js",
-    "restaurant": "./src/bin/order.bin.js"
+    "clean": "./src/bin/clean.bin.js"
   },
   "repository": {
     "type": "git",
@@ -38,6 +37,6 @@
     "replace-json-property": "^1.4.1",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
-    "typescript": "^3.6.2"
+    "typescript": "^3.9.7"
   }
 }

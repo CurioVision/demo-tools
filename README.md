@@ -1,4 +1,10 @@
-# node-command-line-starter
+# demo-tools
+
+- Clean demo BridalLive account: `npm run demo:clean`
+
+
+
+# OLD DOC FOR: node-command-line-starter
 Progammers are lazy. As soon as we have to do the same task over and over again we start on automizing it.
 Automization is often done in the form of a command line utility.
 
