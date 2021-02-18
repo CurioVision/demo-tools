@@ -16,7 +16,7 @@ import {
   BridalLiveReceivingVoucher,
   BridalLiveToken,
   FullBridalLiveItem,
-  ItemListCriteria
+  ItemListCriteria,
 } from './apiTypes'
 
 // const ROOT_URL = 'https://app.bridallive.com'
@@ -29,7 +29,7 @@ const LOGIN_ENDPOINT = '/bl-server/api/auth/apiLogin'
  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/company-controller
  */
 const COMPANY_ENDPOINTS = {
-  company: '/bl-server/api/company'
+  company: '/bl-server/api/company',
 }
 // /**
 //  * BridalLive `department-controller`:
@@ -72,7 +72,7 @@ const ITEM_ENDPOINTS = {
   getItem: '/bl-server/api/items',
   deleteItem: '/bl-server/api/items',
   allAttributes: '/bl-server/api/items/getItemDetailsForLookbook',
-  updateItemAttributes: '/bl-server/api/itemItemAttributes' // UNDOCUMENTED, but used in Bridal Live app
+  updateItemAttributes: '/bl-server/api/itemItemAttributes', // UNDOCUMENTED, but used in Bridal Live app
 }
 
 // /**
@@ -133,7 +133,7 @@ const RECEIVING_VOUCHERS_ENDPOINTS = {
   createReceivingVoucherForPOItems:
     '/bl-server/api/receivingVouchers/createForPOItems',
   updateReceivingVoucher: '/bl-server/api/receivingVouchers',
-  deleteReceivingVoucher: '/bl-server/api/receivingVouchers'
+  deleteReceivingVoucher: '/bl-server/api/receivingVouchers',
 }
 
 /**
@@ -143,7 +143,7 @@ const RECEIVING_VOUCHERS_ENDPOINTS = {
  */
 const POS_TRANSACTIONS_ENDPOINTS = {
   allPosTransactions: '/bl-server/api/posTransactions/list?page=0',
-  deletePosTransaction: '/bl-server/api/posTransactions'
+  deletePosTransaction: '/bl-server/api/posTransactions',
 }
 
 /**
@@ -153,7 +153,7 @@ const POS_TRANSACTIONS_ENDPOINTS = {
  */
 const PAYMENTS_ENDPOINTS = {
   allPayments: '/bl-server/api/payments/list?page=0',
-  deletePayment: '/bl-server/api/payments'
+  deletePayment: '/bl-server/api/payments',
 }
 
 /**
@@ -163,26 +163,25 @@ const PAYMENTS_ENDPOINTS = {
  */
 const CONTACTS_ENDPOINTS = {
   allContacts: '/bl-server/api/contacts/list?page=0',
-  deleteContact: '/bl-server/api/contacts'
+  deleteContact: '/bl-server/api/contacts',
 }
 
 const DATE_CRITERIA_FORMAT = 'YYYY-MM-DD'
 const MONTH_LABEL_FORMAT = 'YYYY-MM'
 
 export const getApiCredentials = async (
-  
   username: string,
   password: string
 ): Promise<BridalLiveApiCredentials> => {
   const response = await fetch(BL_ROOT_URL + '/bl-server/api/auth/login', {
     method: 'POST',
     headers: {
-      'content-type': 'application/json'
+      'content-type': 'application/json',
     },
     body: JSON.stringify({
       username: username,
-      password: password
-    })
+      password: password,
+    }),
   })
 
   if (response.status === 200) {
@@ -190,7 +189,7 @@ export const getApiCredentials = async (
     return {
       apiAccess: <boolean>json.license.apiAccess,
       apiKey: json.license.apiKey,
-      retailerId: json.license.retailerId
+      retailerId: json.license.retailerId,
     }
   } else if (response.status === 403) {
     throw new Error('Invalid Login Credentials')
@@ -207,27 +206,22 @@ const authenticate = (retailerId: string, apiKey: string) => {
     method: 'POST',
     body: JSON.stringify({
       retailerId: retailerId,
-      apiKey: apiKey
+      apiKey: apiKey,
     }),
     headers: {
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'application/json',
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data.hasOwnProperty('token')) {
         return data.token
       } else {
-        const errorMessage =
-          data.errors?.code ||
-          'Failed BridalLive authenticate for unknown reason.'
-        throw new Error(errorMessage)
+        throw data
       }
     })
-    .catch(error => {
-      throw new Error(
-        `Failed to authenticate. rootUrl: ${BL_ROOT_URL}. Error: ${error}`
-      )
+    .catch((error) => {
+      throw error
     })
 }
 /**
@@ -240,7 +234,7 @@ const authenticate = (retailerId: string, apiKey: string) => {
 const fetchAllItems = (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-):Promise<FullBridalLiveItem[]> => {
+): Promise<FullBridalLiveItem[]> => {
   if (!token || token === '') {
     throw new Error('Cannot fetch Item list data without a valid token')
   }
@@ -250,11 +244,11 @@ const fetchAllItems = (
     body: JSON.stringify(filterCriteria),
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data.result) return data.result as FullBridalLiveItem[]
     })
     .catch(() => {
@@ -269,12 +263,12 @@ const fetchAllItems = (
  * @param token BridalLive token used to authenticate the request
  * @param itemId ID of the item to fetch
  */
-const fetchItem = (  
+const fetchItem = (
   token: BridalLiveToken,
   itemId: string | number
 ): Promise<BridalLiveItem> => {
   if (!token || token === '') {
-    logError('Cannot fetch Item data without a valid token', null, true)
+    logError('Cannot fetch Item data without a valid token', null)
     throw new Error('Cannot fetch Item data without a valid token')
   }
 
@@ -282,15 +276,15 @@ const fetchItem = (
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data) return data
     })
-    .catch(error => {
-      logError('Failed to fetch Item data', error, true)
+    .catch((error) => {
+      logError('Failed to fetch Item data', error)
       throw new Error('Failed to fetch Item data')
     })
 }
@@ -307,20 +301,23 @@ const deleteItem = (
   itemId: string | number
 ): Promise<BridalLiveItem> => {
   if (!token || token === '') {
-    logError('Cannot delete Item data without a valid token', null, true)
+    logError('Cannot delete Item data without a valid token', null)
     throw new Error('Cannot delete Item data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${ITEM_ENDPOINTS.deleteItem}/${itemId.toString()}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
-    },
-    body: {}
-  })
-    .then(res => res.json())
-    .then(data => {
+  return fetch(
+    BL_ROOT_URL + `${ITEM_ENDPOINTS.deleteItem}/${itemId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+      body: {},
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -330,46 +327,39 @@ const deleteItem = (
 }
 
 const updateItem = (
-  
   token: BridalLiveToken,
   item: BridalLiveItem
 ): Promise<BridalLiveItem> => {
   if (!token || token === '') {
-    logError(
-      'Cannot update an Item data without a valid token',
-      null,
-      true
-    )
+    logError('Cannot update an Item data without a valid token', null)
     throw new Error('Cannot update an Item data without a valid token')
   }
 
   if (!item.id) {
-    logError(
-      'Cannot update Item data without a valid Item ID',
-      null,
-      true
-    )
+    logError('Cannot update Item data without a valid Item ID', null)
     throw new Error('Cannot update Item data without a valid Item ID')
   }
 
-  return fetch(BL_ROOT_URL + `${ITEM_ENDPOINTS.updateItem}/${item.id.toString()}`, {
-    method: 'PUT',
-    body: JSON.stringify(item),
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
+  return fetch(
+    BL_ROOT_URL + `${ITEM_ENDPOINTS.updateItem}/${item.id.toString()}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(item),
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
     }
-  })
-    .then(res => res.json())
-    .then(data => {
+  )
+    .then((res) => res.json())
+    .then((data) => {
       return data
     })
-    .catch(error => {
-      logError('Failed to fetch Item data', error, true)
+    .catch((error) => {
+      logError('Failed to fetch Item data', error)
       throw new Error('Failed to update Item data')
     })
 }
-
 
 /**
  * Fetch BridalLive purchaseOrders. Uses the purchaseOrders/list endpoint and returns the result.
@@ -381,9 +371,11 @@ const updateItem = (
 const fetchAllPurchaseOrders = (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-):Promise<BridalLivePurchaseOrder[]> => {
+): Promise<BridalLivePurchaseOrder[]> => {
   if (!token || token === '') {
-    throw new Error('Cannot fetch Purchase Order list data without a valid token')
+    throw new Error(
+      'Cannot fetch Purchase Order list data without a valid token'
+    )
   }
 
   return fetch(BL_ROOT_URL + PURCHASE_ORDERS_ENDPOINTS.allPurchaseOrders, {
@@ -391,11 +383,11 @@ const fetchAllPurchaseOrders = (
     body: JSON.stringify(filterCriteria),
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data.result) return data.result as BridalLivePurchaseOrder[]
     })
     .catch(() => {
@@ -415,20 +407,26 @@ const deletePurchaseOrder = (
   purchaseOrderId: string | number
 ): Promise<BridalLivePurchaseOrder> => {
   if (!token || token === '') {
-    logError('Cannot delete PurchaseOrder data without a valid token', null, true)
+    logError('Cannot delete PurchaseOrder data without a valid token', null)
     throw new Error('Cannot delete PurchaseOrder data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${PURCHASE_ORDERS_ENDPOINTS.deletePurchaseOrder}/${purchaseOrderId.toString()}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
-    },
-    body: {}
-  })
-    .then(res => res.json())
-    .then(data => {
+  return fetch(
+    BL_ROOT_URL +
+      `${
+        PURCHASE_ORDERS_ENDPOINTS.deletePurchaseOrder
+      }/${purchaseOrderId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+      body: {},
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -437,20 +435,14 @@ const deletePurchaseOrder = (
     })
 }
 
-
 const createPurchaseOrderForItems = (
-  
   token: BridalLiveToken,
   vendorId: string,
   employeeId: string,
   itemIds: number[]
 ) => {
   if (!token || token === '') {
-    logError(
-      'Cannot create a Purchase Order data without a valid token',
-      null,
-      true
-    )
+    logError('Cannot create a Purchase Order data without a valid token', null)
     throw new Error('Cannot create a Purchase Order data without a valid token')
   }
 
@@ -462,35 +454,26 @@ const createPurchaseOrderForItems = (
       body: JSON.stringify(itemIds),
       headers: {
         'Content-Type': 'application/json',
-        token: token
-      }
+        token: token,
+      },
     }
   )
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       return data
     })
-    .catch(error => {
-      logError(
-        'Failed to fetch Purchase Order data',
-        error,
-        true
-      )
+    .catch((error) => {
+      logError('Failed to fetch Purchase Order data', error)
       throw new Error('Failed to fetch Purchase Order data')
     })
 }
 
 const updatePurchaseOrder = (
-  
   token: BridalLiveToken,
   purchaseOrder: BridalLivePurchaseOrder
 ): Promise<BridalLivePurchaseOrder> => {
   if (!token || token === '') {
-    logError(
-      'Cannot update a Purchase Order without a valid token',
-      null,
-      true
-    )
+    logError('Cannot update a Purchase Order without a valid token', null)
     throw new Error('Cannot update a Purchase Order without a valid token')
   }
 
@@ -505,26 +488,21 @@ const updatePurchaseOrder = (
       body: JSON.stringify(purchaseOrder),
       headers: {
         'Content-Type': 'application/json',
-        token: token
-      }
+        token: token,
+      },
     }
   )
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       return data
     })
-    .catch(error => {
-      logError(
-        'Failed to update Purchase Order data',
-        error,
-        true
-      )
+    .catch((error) => {
+      logError('Failed to update Purchase Order data', error)
       throw new Error('Failed to update Purchase Order data')
     })
 }
 
 const createReceivingVoucherForPOItems = (
-  
   token: BridalLiveToken,
   vendorId: string,
   employeeId: string,
@@ -533,8 +511,7 @@ const createReceivingVoucherForPOItems = (
   if (!token || token === '') {
     logError(
       'Cannot create a Receiving Voucher data without a valid token',
-      null,
-      true
+      null
     )
     throw new Error(
       'Cannot create a Receiving Voucher data without a valid token'
@@ -549,34 +526,28 @@ const createReceivingVoucherForPOItems = (
       body: JSON.stringify(poItems),
       headers: {
         'Content-Type': 'application/json',
-        token: token
-      }
+        token: token,
+      },
     }
   )
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       return data
     })
-    .catch(error => {
-      logError(
-        'Failed to fetch Receiving Voucher data',
-        error,
-        true
-      )
+    .catch((error) => {
+      logError('Failed to fetch Receiving Voucher data', error)
       throw new Error('Failed to fetch Receiving Voucher data')
     })
 }
 
 const updateReceivingVoucher = (
-  
   token: BridalLiveToken,
   receivingVoucher: BridalLiveReceivingVoucher
 ): Promise<string | object> => {
   if (!token || token === '') {
     logError(
       'Cannot update a Receiving Voucher data without a valid token',
-      null,
-      true
+      null
     )
     throw new Error(
       'Cannot update a Receiving Voucher data without a valid token'
@@ -593,24 +564,19 @@ const updateReceivingVoucher = (
       body: JSON.stringify(receivingVoucher),
       headers: {
         'Content-Type': 'application/json',
-        token: token
-      }
+        token: token,
+      },
     }
   )
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       return data
     })
-    .catch(error => {
-      logError(
-        'Failed to update Receiving Voucher data',
-        error,
-        true
-      )
+    .catch((error) => {
+      logError('Failed to update Receiving Voucher data', error)
       throw new Error('Failed to update Receiving Voucher data')
     })
 }
-
 
 /**
  * Fetch BridalLive receivingVouchers. Uses the receivingVouchers/list endpoint and returns the result.
@@ -622,21 +588,26 @@ const updateReceivingVoucher = (
 const fetchAllReceivingVouchers = (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-):Promise<BridalLiveReceivingVoucher[]> => {
+): Promise<BridalLiveReceivingVoucher[]> => {
   if (!token || token === '') {
-    throw new Error('Cannot fetch ReceivingVoucher list data without a valid token')
+    throw new Error(
+      'Cannot fetch ReceivingVoucher list data without a valid token'
+    )
   }
 
-  return fetch(BL_ROOT_URL + RECEIVING_VOUCHERS_ENDPOINTS.allReceivingVouchers, {
-    method: 'POST',
-    body: JSON.stringify(filterCriteria),
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
+  return fetch(
+    BL_ROOT_URL + RECEIVING_VOUCHERS_ENDPOINTS.allReceivingVouchers,
+    {
+      method: 'POST',
+      body: JSON.stringify(filterCriteria),
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
     }
-  })
-    .then(res => res.json())
-    .then(data => {
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.result) return data.result as BridalLiveReceivingVoucher[]
     })
     .catch(() => {
@@ -656,19 +627,25 @@ const deleteReceivingVoucher = (
   receivingVoucherId: string | number
 ): Promise<BridalLiveReceivingVoucher> => {
   if (!token || token === '') {
-    logError('Cannot delete ReceivingVoucher data without a valid token', null, true)
+    logError('Cannot delete ReceivingVoucher data without a valid token', null)
     throw new Error('Cannot delete ReceivingVoucher data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${RECEIVING_VOUCHERS_ENDPOINTS.deleteReceivingVoucher}/${receivingVoucherId.toString()}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
+  return fetch(
+    BL_ROOT_URL +
+      `${
+        RECEIVING_VOUCHERS_ENDPOINTS.deleteReceivingVoucher
+      }/${receivingVoucherId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
     }
-  })
-    .then(res => res.json())
-    .then(data => {
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -677,17 +654,14 @@ const deleteReceivingVoucher = (
     })
 }
 
-
 const completeReceivingVoucher = (
-  
   token: BridalLiveToken,
   receivingVoucherId: string | number
 ): Promise<BridalLiveReceivingVoucher> => {
   if (!token || token === '') {
     logError(
       'Cannot complete a Receiving Voucher data without a valid token',
-      null,
-      true
+      null
     )
     throw new Error(
       'Cannot complete a Receiving Voucher data without a valid token'
@@ -703,20 +677,16 @@ const completeReceivingVoucher = (
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        token: token
-      }
+        token: token,
+      },
     }
   )
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       return data
     })
-    .catch(error => {
-      logError(
-        'Failed to complete Receiving Voucher data',
-        error,
-        true
-      )
+    .catch((error) => {
+      logError('Failed to complete Receiving Voucher data', error)
       throw new Error('Failed to complete Receiving Voucher data')
     })
 }
@@ -731,9 +701,11 @@ const completeReceivingVoucher = (
 const fetchAllPosTransactions = (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-):Promise<BridalLivePosTransaction[]> => {
+): Promise<BridalLivePosTransaction[]> => {
   if (!token || token === '') {
-    throw new Error('Cannot fetch PosTransaction list data without a valid token')
+    throw new Error(
+      'Cannot fetch PosTransaction list data without a valid token'
+    )
   }
 
   return fetch(BL_ROOT_URL + POS_TRANSACTIONS_ENDPOINTS.allPosTransactions, {
@@ -741,11 +713,11 @@ const fetchAllPosTransactions = (
     body: JSON.stringify(filterCriteria),
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data.result) return data.result as BridalLivePosTransaction[]
     })
     .catch(() => {
@@ -765,19 +737,25 @@ const deletePosTransaction = (
   posTransactionId: string | number
 ): Promise<BridalLivePosTransaction> => {
   if (!token || token === '') {
-    logError('Cannot delete PosTransaction data without a valid token', null, true)
+    logError('Cannot delete PosTransaction data without a valid token', null)
     throw new Error('Cannot delete PosTransaction data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${POS_TRANSACTIONS_ENDPOINTS.deletePosTransaction}/${posTransactionId.toString()}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
+  return fetch(
+    BL_ROOT_URL +
+      `${
+        POS_TRANSACTIONS_ENDPOINTS.deletePosTransaction
+      }/${posTransactionId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
     }
-  })
-    .then(res => res.json())
-    .then(data => {
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -785,7 +763,6 @@ const deletePosTransaction = (
       }
     })
 }
-
 
 /**
  * Fetch BridalLive payments. Uses the payments/list endpoint and returns the result.
@@ -797,7 +774,7 @@ const deletePosTransaction = (
 const fetchAllPayments = (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-):Promise<BridalLivePayment[]> => {
+): Promise<BridalLivePayment[]> => {
   if (!token || token === '') {
     throw new Error('Cannot fetch Payment list data without a valid token')
   }
@@ -807,11 +784,11 @@ const fetchAllPayments = (
     body: JSON.stringify(filterCriteria),
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data.result) return data.result as BridalLivePayment[]
     })
     .catch(() => {
@@ -831,20 +808,23 @@ const deletePayment = (
   paymentId: string | number
 ): Promise<BridalLivePayment> => {
   if (!token || token === '') {
-    logError('Cannot delete Payment data without a valid token', null, true)
+    logError('Cannot delete Payment data without a valid token', null)
     throw new Error('Cannot delete Payment data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${PAYMENTS_ENDPOINTS.deletePayment}/${paymentId.toString()}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
-    },
-    body: {}
-  })
-    .then(res => res.json())
-    .then(data => {
+  return fetch(
+    BL_ROOT_URL + `${PAYMENTS_ENDPOINTS.deletePayment}/${paymentId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+      body: {},
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -863,7 +843,7 @@ const deletePayment = (
 const fetchAllContacts = (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-):Promise<BridalLiveContact[]> => {
+): Promise<BridalLiveContact[]> => {
   if (!token || token === '') {
     throw new Error('Cannot fetch Contact list data without a valid token')
   }
@@ -873,11 +853,11 @@ const fetchAllContacts = (
     body: JSON.stringify(filterCriteria),
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data.result) return data.result as BridalLiveContact[]
     })
     .catch(() => {
@@ -897,19 +877,22 @@ const deleteContact = (
   contactId: string | number
 ): Promise<BridalLiveContact> => {
   if (!token || token === '') {
-    logError('Cannot delete Contact data without a valid token', null, true)
+    logError('Cannot delete Contact data without a valid token', null)
     throw new Error('Cannot delete Contact data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${CONTACTS_ENDPOINTS.deleteContact}/${contactId.toString()}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      token: token
+  return fetch(
+    BL_ROOT_URL + `${CONTACTS_ENDPOINTS.deleteContact}/${contactId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
     }
-  })
-    .then(res => res.json())
-    .then(data => {
+  )
+    .then((res) => res.json())
+    .then((data) => {
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -926,15 +909,10 @@ const deleteContact = (
  * @param token BridalLive token used to authenticate the request
  */
 const fetchBridalLiveCompany = (
-  
   token: BridalLiveToken
 ): Promise<BridalLiveCompany> => {
   if (!token || token === '') {
-    logError(
-      'Cannot fetch BridalLive Company data without a valid token',
-      null,
-      true
-    )
+    logError('Cannot fetch BridalLive Company data without a valid token', null)
     throw new Error(
       'Cannot fetch BridalLive Company data without a valid token'
     )
@@ -943,19 +921,15 @@ const fetchBridalLiveCompany = (
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      token: token
-    }
+      token: token,
+    },
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       if (data) return data
     })
-    .catch(error => {
-      logError(
-        'Failed to fetch BridalLive Company data',
-        error,
-        true
-      )
+    .catch((error) => {
+      logError('Failed to fetch BridalLive Company data', error)
       throw new Error('Failed to fetch BridalLive Company data')
     })
   // return
@@ -1006,5 +980,5 @@ export default {
   deletePayment,
   fetchAllContacts,
   deleteContact,
-  fetchBridalLiveCompany
+  fetchBridalLiveCompany,
 }
