@@ -26,6 +26,14 @@ program
   )
 
 program
+  .command('all')
+  .description('Runs all demo tool commands in order')
+  .action(async ({ parent }) => {
+    setGlobalDebug(parent.debug)
+    await cleanDemoAccount()
+    await populateDemoAccount()
+  })
+program
   .command('clean')
   .description(
     'Cleans up the demo BridalLive account by removing all exisiting data'

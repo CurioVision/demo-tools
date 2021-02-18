@@ -7,6 +7,11 @@ export const BL_ROOT_URL = 'https://app.bridallive.com'
  * stored in 1Password).
  */
 export const BL_DEMO_ACCT_RETAILER_ID = 'fa96bd3d'
-export const BL_DEMO_ACCT_API_KEY = '111111111111111' // '6d448f878611dca9'
+export const BL_DEMO_ACCT_API_KEY = '6d448f878611dca9'
 
+/**
+ * Key used to store global debug option.
+ * Setting a global variable in the Commander program is a hacky way to avoid
+ * passing the debug option around.
+ */
 export const GLOBAL_DEBUG_KEY = 'debugDemoTools'

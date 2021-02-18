@@ -1,6 +1,7 @@
 import boxen from 'boxen'
 import chalk from 'chalk'
 import clean from './actions/clean'
+import populate from './actions/populate'
 import BridalLiveAPI from './integrations/BridalLive/api'
 import { logError } from './logger'
 import {
@@ -15,17 +16,21 @@ const TITLE =
   '|~) _. _| _ || .   _   |~\\ _  _ _  _\n' +
   '|_)| |(_|(_|||_|\\/(/_  |_/(/_| | |(_)\n'
 
+let authenticatedToken = undefined
+
 export const authenticateDemoAccount = async () => {
+  if (authenticatedToken !== undefined) return
+
   console.log(TITLE)
   console.log(`DEBUG: ${global[GLOBAL_DEBUG_KEY]}`)
   try {
-    const token = await BridalLiveAPI.authenticate(
+    const _token = await BridalLiveAPI.authenticate(
       BL_DEMO_ACCT_RETAILER_ID,
       BL_DEMO_ACCT_API_KEY
     )
 
-    const company = await BridalLiveAPI.fetchBridalLiveCompany(token)
-    if (!company || !token)
+    const company = await BridalLiveAPI.fetchBridalLiveCompany(_token)
+    if (!company || !_token)
       throw new Error(
         `Failed to authenticate demo BridalLive account. Retailer ID: ${BL_DEMO_ACCT_RETAILER_ID}, API Key: ${BL_DEMO_ACCT_API_KEY}`
       )
@@ -33,27 +38,28 @@ export const authenticateDemoAccount = async () => {
     const demoAccountMsg = `${chalk.bold('BridalLive Demo Account')}\nStore: ${
       company.name
     }\nEmail: ${company.emailAddress}`
-    const accountBox = `${TITLE} ${boxen(demoAccountMsg, {
+    const accountBox = `${boxen(demoAccountMsg, {
       padding: 1,
       margin: 1,
       borderStyle: 'round',
     })}`
     console.log(accountBox)
-    return token
+    authenticatedToken = _token
   } catch (error) {
     logError(
       'Error occurred while authenticating BridalLive demo account',
       error
     )
-    return null
+    authenticatedToken = undefined
   }
 }
 
 export const cleanDemoAccount = async () => {
-  const token = await authenticateDemoAccount()
-  if (token) clean(token)
+  await authenticateDemoAccount()
+  if (authenticatedToken) await clean(authenticatedToken)
 }
 
-export const populateDemoAccount = () => {
-  console.log('populate')
+export const populateDemoAccount = async () => {
+  await authenticateDemoAccount()
+  if (authenticatedToken) await populate(authenticatedToken)
 }

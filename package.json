@@ -8,7 +8,9 @@
     "format:check": "prettier --list-different '{src,__mocks__,bin}/**/*.js'",
     "format:write": "prettier --write '{src,__mocks__,bin}/**/*.js'",
     "demo:help": "ts-node src/bin/demo.bin.ts -h",
+    "demo:all": "ts-node src/bin/demo.bin.ts all --debug",
     "demo:clean": "ts-node src/bin/demo.bin.ts clean --debug",
+    "demo:populate": "ts-node src/bin/demo.bin.ts populate --debug",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "report:coverage": "npm run test:coverage && codecov"
