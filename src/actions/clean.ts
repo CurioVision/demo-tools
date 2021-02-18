@@ -2,20 +2,22 @@ import BridalLiveApi from '../integrations/BridalLive/api'
 import { BridalLiveToken } from '../integrations/BridalLive/apiTypes'
 import { logError, logHeader, logInfo } from '../logger'
 
-const cleanBridalLiveDemoAccount = async (token: BridalLiveToken) => {
+const cleanBridalLiveDemoAccount = async (
+  demoAccounttoken: BridalLiveToken
+) => {
   logHeader(`Rolling back BridalLive Demo account`)
   try {
     // fetch and delete purchase orders
     await fetchAllAndDelete(
       'purchaseOrder',
-      token,
+      demoAccounttoken,
       BridalLiveApi.fetchAllPurchaseOrders,
       BridalLiveApi.deletePurchaseOrder
     )
     // fetch and delete receiving orders
     await fetchAllAndDelete(
       'receivingVoucher',
-      token,
+      demoAccounttoken,
       BridalLiveApi.fetchAllReceivingVouchers,
       BridalLiveApi.deleteReceivingVoucher,
       { status: '' }
@@ -23,28 +25,28 @@ const cleanBridalLiveDemoAccount = async (token: BridalLiveToken) => {
     // fetch and delete payments
     await fetchAllAndDelete(
       'payment',
-      token,
+      demoAccounttoken,
       BridalLiveApi.fetchAllPayments,
       BridalLiveApi.deletePayment
     )
     // fetch and delete pos transactions
     await fetchAllAndDelete(
       'posTransaction',
-      token,
+      demoAccounttoken,
       BridalLiveApi.fetchAllPosTransactions,
       BridalLiveApi.deletePosTransaction
     )
     // fetch and delete items
     await fetchAllAndDelete(
       'item',
-      token,
+      demoAccounttoken,
       BridalLiveApi.fetchAllItems,
       BridalLiveApi.deleteItem
     )
     // fetch and delete contacts
     await fetchAllAndDelete(
       'contact',
-      token,
+      demoAccounttoken,
       BridalLiveApi.fetchAllContacts,
       BridalLiveApi.deleteContact
     )

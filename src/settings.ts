@@ -1,3 +1,5 @@
+import { BridalLiveApiCredentials } from './integrations/BridalLive/apiTypes'
+
 export const BL_ROOT_URL = 'https://app.bridallive.com'
 
 /**
@@ -15,3 +17,8 @@ export const BL_DEMO_ACCT_API_KEY = '6d448f878611dca9'
  * passing the debug option around.
  */
 export const GLOBAL_DEBUG_KEY = 'debugDemoTools'
+
+export const BL_CUSTOMER_ACCTS: BridalLiveApiCredentials[] = [
+  // Heba Adata
+  { retailerId: '3f9f9462', apiKey: '2da9861cb6fb7f8b' },
+]

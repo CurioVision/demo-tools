@@ -16,10 +16,10 @@ const TITLE =
   '|~) _. _| _ || .   _   |~\\ _  _ _  _\n' +
   '|_)| |(_|(_|||_|\\/(/_  |_/(/_| | |(_)\n'
 
-let authenticatedToken = undefined
+let demoAccountToken = undefined
 
 export const authenticateDemoAccount = async () => {
-  if (authenticatedToken !== undefined) return
+  if (demoAccountToken !== undefined) return
 
   console.log(TITLE)
   console.log(`DEBUG: ${global[GLOBAL_DEBUG_KEY]}`)
@@ -44,22 +44,22 @@ export const authenticateDemoAccount = async () => {
       borderStyle: 'round',
     })}`
     console.log(accountBox)
-    authenticatedToken = _token
+    demoAccountToken = _token
   } catch (error) {
     logError(
       'Error occurred while authenticating BridalLive demo account',
       error
     )
-    authenticatedToken = undefined
+    demoAccountToken = undefined
   }
 }
 
 export const cleanDemoAccount = async () => {
   await authenticateDemoAccount()
-  if (authenticatedToken) await clean(authenticatedToken)
+  if (demoAccountToken) await clean(demoAccountToken)
 }
 
 export const populateDemoAccount = async () => {
   await authenticateDemoAccount()
-  if (authenticatedToken) await populate(authenticatedToken)
+  if (demoAccountToken) await populate(demoAccountToken)
 }

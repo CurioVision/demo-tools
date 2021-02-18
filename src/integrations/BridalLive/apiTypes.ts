@@ -181,8 +181,8 @@ export interface BridalLiveStoreSettingsData {
 
 export interface BridalLiveApiCredentials {
   retailerId: string
-  apiAccess: boolean
   apiKey: string
+  apiAccess?: boolean
 }
 
 export interface BridalCustomerSettings {
