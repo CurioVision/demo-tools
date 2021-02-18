@@ -17,8 +17,8 @@ export const BL_DEMO_ACCT_API_KEY = '6d448f878611dca9'
  */
 
 export const BL_DEMO_ACCT_VALIDATION = {
-  companyName: 'Demo Bridal Store blah',
-  emailAddress: 'ingrid@butterflyrevolution.com ',
+  companyName: 'Demo Bridal Store',
+  emailAddress: 'ingrid@butterflyrevolution.com',
 }
 
 /**
