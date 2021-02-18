@@ -2,10 +2,9 @@
 // BridalLive types, in a single node package that app & functions can import
 
 import fetch from 'node-fetch'
-import { logError } from '../../logger'
-import { BL_ROOT_URL } from '../../settings'
+import { logError, logSevereError } from '../../logger'
+import { BL_DEMO_ACCT_VALIDATION, BL_ROOT_URL } from '../../settings'
 import {
-  BridalLiveApiCredentials,
   BridalLiveCompany,
   BridalLiveContact,
   BridalLiveItem,
@@ -169,36 +168,25 @@ const CONTACTS_ENDPOINTS = {
 const DATE_CRITERIA_FORMAT = 'YYYY-MM-DD'
 const MONTH_LABEL_FORMAT = 'YYYY-MM'
 
-export const getApiCredentials = async (
-  username: string,
-  password: string
-): Promise<BridalLiveApiCredentials> => {
-  const response = await fetch(BL_ROOT_URL + '/bl-server/api/auth/login', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      username: username,
-      password: password,
-    }),
-  })
+const allowMutation = async (token: BridalLiveToken) => {
+  try {
+    const company = await fetchBridalLiveCompany(token)
+    const isDemoAccount =
+      company.name === BL_DEMO_ACCT_VALIDATION.companyName &&
+      company.emailAddress === BL_DEMO_ACCT_VALIDATION.emailAddress
+    if (!isDemoAccount) throw new Error()
 
-  if (response.status === 200) {
-    const json = await response.json()
-    return {
-      apiAccess: <boolean>json.license.apiAccess,
-      apiKey: json.license.apiKey,
-      retailerId: json.license.retailerId,
-    }
-  } else if (response.status === 403) {
-    throw new Error('Invalid Login Credentials')
+    return true
+  } catch (error) {
+    logSevereError(
+      'You are attempting to mutate a BridalLive account that DOES NOT match the demo BridalLive account. See `settings.BL_DEMO_ACCT_VALIDATION`. ',
+      null
+    )
+    return false
   }
-
-  throw new Error(await response.text())
 }
 
-const authenticate = (retailerId: string, apiKey: string) => {
+const authenticate = async (retailerId: string, apiKey: string) => {
   if (!retailerId || !apiKey || retailerId === '' || apiKey === '') {
     throw new Error('Missing retailer ID or API key')
   }
@@ -231,7 +219,7 @@ const authenticate = (retailerId: string, apiKey: string) => {
  * @param token BridalLive token used to authenticate the request
  * @param filterCriteria POST request body
  */
-const fetchAllItems = (
+const fetchAllItems = async (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<FullBridalLiveItem[]> => {
@@ -263,7 +251,7 @@ const fetchAllItems = (
  * @param token BridalLive token used to authenticate the request
  * @param itemId ID of the item to fetch
  */
-const fetchItem = (
+const fetchItem = async (
   token: BridalLiveToken,
   itemId: string | number
 ): Promise<BridalLiveItem> => {
@@ -296,7 +284,7 @@ const fetchItem = (
  * @param token BridalLive token used to authenticate the request
  * @param itemId ID of the item to fetch
  */
-const deleteItem = (
+const deleteItem = async (
   token: BridalLiveToken,
   itemId: string | number
 ): Promise<BridalLiveItem> => {
@@ -304,6 +292,9 @@ const deleteItem = (
     logError('Cannot delete Item data without a valid token', null)
     throw new Error('Cannot delete Item data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL + `${ITEM_ENDPOINTS.deleteItem}/${itemId.toString()}`,
@@ -326,7 +317,7 @@ const deleteItem = (
     })
 }
 
-const updateItem = (
+const updateItem = async (
   token: BridalLiveToken,
   item: BridalLiveItem
 ): Promise<BridalLiveItem> => {
@@ -334,6 +325,9 @@ const updateItem = (
     logError('Cannot update an Item data without a valid token', null)
     throw new Error('Cannot update an Item data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   if (!item.id) {
     logError('Cannot update Item data without a valid Item ID', null)
@@ -368,7 +362,7 @@ const updateItem = (
  * @param token BridalLive token used to authenticate the request
  * @param filterCriteria POST request body
  */
-const fetchAllPurchaseOrders = (
+const fetchAllPurchaseOrders = async (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLivePurchaseOrder[]> => {
@@ -402,7 +396,7 @@ const fetchAllPurchaseOrders = (
  * @param token BridalLive token used to authenticate the request
  * @param purchaseOrderId ID of the purchaseOrder to fetch
  */
-const deletePurchaseOrder = (
+const deletePurchaseOrder = async (
   token: BridalLiveToken,
   purchaseOrderId: string | number
 ): Promise<BridalLivePurchaseOrder> => {
@@ -410,6 +404,9 @@ const deletePurchaseOrder = (
     logError('Cannot delete PurchaseOrder data without a valid token', null)
     throw new Error('Cannot delete PurchaseOrder data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -435,7 +432,7 @@ const deletePurchaseOrder = (
     })
 }
 
-const createPurchaseOrderForItems = (
+const createPurchaseOrderForItems = async (
   token: BridalLiveToken,
   vendorId: string,
   employeeId: string,
@@ -445,6 +442,9 @@ const createPurchaseOrderForItems = (
     logError('Cannot create a Purchase Order data without a valid token', null)
     throw new Error('Cannot create a Purchase Order data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -468,7 +468,7 @@ const createPurchaseOrderForItems = (
     })
 }
 
-const updatePurchaseOrder = (
+const updatePurchaseOrder = async (
   token: BridalLiveToken,
   purchaseOrder: BridalLivePurchaseOrder
 ): Promise<BridalLivePurchaseOrder> => {
@@ -476,6 +476,9 @@ const updatePurchaseOrder = (
     logError('Cannot update a Purchase Order without a valid token', null)
     throw new Error('Cannot update a Purchase Order without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -502,7 +505,7 @@ const updatePurchaseOrder = (
     })
 }
 
-const createReceivingVoucherForPOItems = (
+const createReceivingVoucherForPOItems = async (
   token: BridalLiveToken,
   vendorId: string,
   employeeId: string,
@@ -517,6 +520,9 @@ const createReceivingVoucherForPOItems = (
       'Cannot create a Receiving Voucher data without a valid token'
     )
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -540,7 +546,7 @@ const createReceivingVoucherForPOItems = (
     })
 }
 
-const updateReceivingVoucher = (
+const updateReceivingVoucher = async (
   token: BridalLiveToken,
   receivingVoucher: BridalLiveReceivingVoucher
 ): Promise<string | object> => {
@@ -553,6 +559,9 @@ const updateReceivingVoucher = (
       'Cannot update a Receiving Voucher data without a valid token'
     )
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -585,7 +594,7 @@ const updateReceivingVoucher = (
  * @param token BridalLive token used to authenticate the request
  * @param filterCriteria POST request body
  */
-const fetchAllReceivingVouchers = (
+const fetchAllReceivingVouchers = async (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLiveReceivingVoucher[]> => {
@@ -622,7 +631,7 @@ const fetchAllReceivingVouchers = (
  * @param token BridalLive token used to authenticate the request
  * @param receivingVoucherId ID of the receivingVoucher to fetch
  */
-const deleteReceivingVoucher = (
+const deleteReceivingVoucher = async (
   token: BridalLiveToken,
   receivingVoucherId: string | number
 ): Promise<BridalLiveReceivingVoucher> => {
@@ -630,6 +639,9 @@ const deleteReceivingVoucher = (
     logError('Cannot delete ReceivingVoucher data without a valid token', null)
     throw new Error('Cannot delete ReceivingVoucher data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -654,7 +666,7 @@ const deleteReceivingVoucher = (
     })
 }
 
-const completeReceivingVoucher = (
+const completeReceivingVoucher = async (
   token: BridalLiveToken,
   receivingVoucherId: string | number
 ): Promise<BridalLiveReceivingVoucher> => {
@@ -667,6 +679,9 @@ const completeReceivingVoucher = (
       'Cannot complete a Receiving Voucher data without a valid token'
     )
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -698,7 +713,7 @@ const completeReceivingVoucher = (
  * @param token BridalLive token used to authenticate the request
  * @param filterCriteria POST request body
  */
-const fetchAllPosTransactions = (
+const fetchAllPosTransactions = async (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLivePosTransaction[]> => {
@@ -732,7 +747,7 @@ const fetchAllPosTransactions = (
  * @param token BridalLive token used to authenticate the request
  * @param posTransactionId ID of the posTransaction to fetch
  */
-const deletePosTransaction = (
+const deletePosTransaction = async (
   token: BridalLiveToken,
   posTransactionId: string | number
 ): Promise<BridalLivePosTransaction> => {
@@ -740,6 +755,9 @@ const deletePosTransaction = (
     logError('Cannot delete PosTransaction data without a valid token', null)
     throw new Error('Cannot delete PosTransaction data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL +
@@ -771,7 +789,7 @@ const deletePosTransaction = (
  * @param token BridalLive token used to authenticate the request
  * @param filterCriteria POST request body
  */
-const fetchAllPayments = (
+const fetchAllPayments = async (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLivePayment[]> => {
@@ -803,7 +821,7 @@ const fetchAllPayments = (
  * @param token BridalLive token used to authenticate the request
  * @param paymentId ID of the payment to fetch
  */
-const deletePayment = (
+const deletePayment = async (
   token: BridalLiveToken,
   paymentId: string | number
 ): Promise<BridalLivePayment> => {
@@ -811,6 +829,9 @@ const deletePayment = (
     logError('Cannot delete Payment data without a valid token', null)
     throw new Error('Cannot delete Payment data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL + `${PAYMENTS_ENDPOINTS.deletePayment}/${paymentId.toString()}`,
@@ -840,7 +861,7 @@ const deletePayment = (
  * @param token BridalLive token used to authenticate the request
  * @param filterCriteria POST request body
  */
-const fetchAllContacts = (
+const fetchAllContacts = async (
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLiveContact[]> => {
@@ -872,7 +893,7 @@ const fetchAllContacts = (
  * @param token BridalLive token used to authenticate the request
  * @param contactId ID of the contact to fetch
  */
-const deleteContact = (
+const deleteContact = async (
   token: BridalLiveToken,
   contactId: string | number
 ): Promise<BridalLiveContact> => {
@@ -880,6 +901,9 @@ const deleteContact = (
     logError('Cannot delete Contact data without a valid token', null)
     throw new Error('Cannot delete Contact data without a valid token')
   }
+
+  const allowMutate = await allowMutation(token)
+  if (!allowMutate) return
 
   return fetch(
     BL_ROOT_URL + `${CONTACTS_ENDPOINTS.deleteContact}/${contactId.toString()}`,
@@ -908,7 +932,7 @@ const deleteContact = (
  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/company-controller
  * @param token BridalLive token used to authenticate the request
  */
-const fetchBridalLiveCompany = (
+const fetchBridalLiveCompany = async (
   token: BridalLiveToken
 ): Promise<BridalLiveCompany> => {
   if (!token || token === '') {
@@ -959,7 +983,6 @@ const fetchBridalLiveCompany = (
 export default {
   MONTH_LABEL_FORMAT,
   DATE_CRITERIA_FORMAT,
-  getApiCredentials,
   authenticate,
   fetchAllItems,
   fetchItem,

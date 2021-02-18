@@ -1,5 +1,8 @@
 import BridalLiveApi from '../integrations/BridalLive/api'
-import { BridalLiveToken } from '../integrations/BridalLive/apiTypes'
+import {
+  BaseBridalLiveObject,
+  BridalLiveToken,
+} from '../integrations/BridalLive/apiTypes'
 import { logError, logHeader, logInfo } from '../logger'
 
 const cleanBridalLiveDemoAccount = async (
@@ -64,20 +67,21 @@ const fetchAllAndDelete = async (
 ) => {
   // fetch and delete items
   logInfo(`Fetching all ${itemType}s`)
-  const items: any[] = await fetchAllFn(token, fetchAllFilter)
+  const items: BaseBridalLiveObject[] = await fetchAllFn(token, fetchAllFilter)
   if (items && items.length > 0) {
     logInfo(`\tFound ${items.length} ${itemType}s that need to be deleted`)
   } else {
     logInfo(`\tNo ${itemType}s need to be deleted`)
   }
-  items.forEach(async (item) => {
+  for (const item of items) {
     try {
-      logInfo(`\tDeleting ${itemType} with id: ${item.id}`)
+      logInfo(`\tAttempting to delete ${itemType} with id: ${item.id}`)
       await deleteFn(token, item.id)
+      logInfo(`\t... deleted ${item.id}`)
     } catch (error) {
       logError(`Error while deleting ${itemType}`, error)
     }
-  })
+  }
 }
 
 export default cleanBridalLiveDemoAccount

@@ -27,8 +27,7 @@ export interface BridalLiveError {
   ]
   fieldErrors: {}
 }
-export interface BridalLiveCompany {
-  id: number
+export interface BridalLiveCompany extends BaseBridalLiveObject {
   version: number
   retailerId: string // "fa96bd3d"
   createdDate: number // 1551111009000
@@ -106,8 +105,8 @@ export interface BridalLiveCompany {
   vatLabelKey: null
 }
 
-export interface BridalLiveDepartment {
-  id: number // 59269,
+export interface BridalLiveDepartment extends BaseBridalLiveObject {
+  // 59269,
   version: number // 1,
   retailerId: string // 'fa96bd3d',
   createdDate: number // 1551111010000,
@@ -133,8 +132,8 @@ export interface BridalLiveDepartment {
   isDepartmentVisibleOnLookbook: null
 }
 
-export interface BridalLiveEmployee {
-  id: number // 30092,
+export interface BridalLiveEmployee extends BaseBridalLiveObject {
+  // 30092,
   version: number // 7,
   retailerId: string // "5b19f2a7",
   createdDate: number // 1579124095077,
@@ -191,11 +190,13 @@ export interface BridalCustomerSettings {
   apiKey: string
   gownDeptId: number
 }
+export interface BaseBridalLiveObject {
+  id: number // 1948588,
+}
 /**
  * The item returned by BridalLive's `/bl-server/api/items/list` endpoint
  */
-export interface BridalLiveItem {
-  id: number // 1948588,
+export interface BridalLiveItem extends BaseBridalLiveObject {
   version: number // 5,
   retailerId: string // "5b19f2a7",
   createdDate: number // 1484247128000,
@@ -341,8 +342,7 @@ export interface BridalLiveReceivingEntry {
   recvDate: string // "2018-12-04"
 }
 
-export interface BridalLiveContact {
-  id: number //6162109;
+export interface BridalLiveContact extends BaseBridalLiveObject {
   version: number //0;
   retailerId: string //'fa96bd3d';
   createdDate: number //1570205417000;
@@ -435,8 +435,8 @@ export interface BridalLiveContact {
   vip: false
 }
 
-export interface BridalLivePosTransactionLineItem {
-  id: number //9851261;
+export interface BridalLivePosTransactionLineItem extends BaseBridalLiveObject {
+  //9851261;
   version: number //3;
   retailerId: string //fa96bd3d';
   createdDate: number //1609341744000;
@@ -530,8 +530,8 @@ export interface BridalLivePosTransactionLineItem {
   taxRecalcFieldChanged: false
   inventoryItem: null
 }
-export interface BridalLivePosTransaction {
-  id: number //5632736;
+export interface BridalLivePosTransaction extends BaseBridalLiveObject {
+  //5632736;
   version: number //5;
   retailerId: string //fa96bd3d';
   createdDate: number //1609341721000;
@@ -629,8 +629,8 @@ export interface BridalLivePosTransaction {
   recentlyAddedPayment: null
 }
 
-export interface BridalLivePurchaseOrder {
-  id: number // 520
+export interface BridalLivePurchaseOrder extends BaseBridalLiveObject {
+  // 520
   version: number // 0
   retailerId: string // '5b19f2a7'
   createdDate: number // 1401992507000
@@ -674,8 +674,8 @@ export interface BridalLivePurchaseOrder {
   eventDateBefore: null
 }
 
-export interface BridalLivePurchaseOrderItem {
-  id: number // 1354
+export interface BridalLivePurchaseOrderItem extends BaseBridalLiveObject {
+  // 1354
   version: number // 0
   retailerId: string // '5b19f2a7'
   createdDate: number // 1400173630000
@@ -732,8 +732,8 @@ export interface FullPurchaseOrderItemWithPO
   purchaseOrder: BridalLivePurchaseOrder | null
 }
 
-export interface BridalLiveReceivingVoucherItem {
-  id: number // 948
+export interface BridalLiveReceivingVoucherItem extends BaseBridalLiveObject {
+  // 948
   version: number //  0
   retailerId: string // '5b19f2a7'
   createdDate: number // 1402596501000
@@ -773,8 +773,8 @@ export interface BridalLiveReceivingVoucherItem {
   quantityAvailableToReceive: null
 }
 
-export interface BridalLiveReceivingVoucher {
-  id: number // 598,
+export interface BridalLiveReceivingVoucher extends BaseBridalLiveObject {
+  // 598,
   version: number // 0,
   retailerId: string // "5b19f2a7",
   createdDate: number // 1402596501000,
@@ -895,8 +895,8 @@ export interface BridalLivePayment {
   yearMonth: string
 }
 
-export interface LookbookAttribute {
-  id: number // 17820
+export interface LookbookAttribute extends BaseBridalLiveObject {
+  // 17820
   version: number // 0
   retailerId: string // '5b19f2a7'
   createdDate: number // 1410538015000
@@ -910,8 +910,8 @@ export interface LookbookAttribute {
   attributeId: number // 37
 }
 
-export interface BridalLiveItemImage {
-  id: number // 4298
+export interface BridalLiveItemImage extends BaseBridalLiveObject {
+  // 4298
   version: number // 0
   retailerId: string // '5b19f2a7'
   createdDate: number // 1409864156000
