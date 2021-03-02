@@ -1,12 +1,13 @@
 import boxen from 'boxen'
 import chalk from 'chalk'
 import clean from './actions/clean'
-import populate from './actions/populate'
+import fetchCustomerData from './actions/fetchCustomerData'
 import BridalLiveAPI from './integrations/BridalLive/api'
 import { logError } from './logger'
 import {
   BL_DEMO_ACCT_API_KEY,
   BL_DEMO_ACCT_RETAILER_ID,
+  BL_QA_ROOT_URL,
   GLOBAL_DEBUG_KEY,
 } from './settings'
 
@@ -25,11 +26,15 @@ export const authenticateDemoAccount = async () => {
   console.log(`DEBUG: ${global[GLOBAL_DEBUG_KEY]}`)
   try {
     const _token = await BridalLiveAPI.authenticate(
+      BL_QA_ROOT_URL,
       BL_DEMO_ACCT_RETAILER_ID,
       BL_DEMO_ACCT_API_KEY
     )
 
-    const company = await BridalLiveAPI.fetchBridalLiveCompany(_token)
+    const company = await BridalLiveAPI.fetchBridalLiveCompany(
+      BL_QA_ROOT_URL,
+      _token
+    )
     if (!company || !_token)
       throw new Error(
         `Failed to authenticate demo BridalLive account. Retailer ID: ${BL_DEMO_ACCT_RETAILER_ID}, API Key: ${BL_DEMO_ACCT_API_KEY}`
@@ -59,7 +64,6 @@ export const cleanDemoAccount = async () => {
   if (demoAccountToken) await clean(demoAccountToken)
 }
 
-export const populateDemoAccount = async () => {
-  await authenticateDemoAccount()
-  if (demoAccountToken) await populate(demoAccountToken)
+export const fetch = async () => {
+  await fetchCustomerData()
 }

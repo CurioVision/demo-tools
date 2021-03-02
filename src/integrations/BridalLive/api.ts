@@ -2,14 +2,21 @@
 // BridalLive types, in a single node package that app & functions can import
 
 import fetch from 'node-fetch'
-import { logError, logSevereError } from '../../logger'
-import { BL_DEMO_ACCT_VALIDATION, BL_ROOT_URL } from '../../settings'
+import { logError, logInfo, logSevereError } from '../../logger'
+import {
+  BL_DEMO_ACCT_VALIDATION,
+  BL_PROD_ROOT_URL,
+  BL_QA_ROOT_URL,
+  GLOBAL_IS_CUSTOMER_ACTION_KEY,
+} from '../../settings'
 import {
   BridalLiveCompany,
   BridalLiveContact,
   BridalLiveItem,
+  BridalLiveItemTransaction,
   BridalLivePayment,
   BridalLivePosTransaction,
+  BridalLivePosTransactionLineItem,
   BridalLivePurchaseOrder,
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucher,
@@ -18,6 +25,28 @@ import {
   FullBridalLiveItem,
   ItemListCriteria,
 } from './apiTypes'
+
+export type FetchAllFunction =
+  | typeof fetchAllContacts
+  | typeof fetchAllItems
+  | typeof fetchAllPayments
+  | typeof fetchAllPosTransactionItems
+  | typeof fetchAllPosTransactions
+  | typeof fetchAllPurchaseOrders
+  | typeof fetchAllReceivingVouchers
+  | typeof fetchAllTransactionItemJournals
+  | typeof fetchAllVendors
+
+export type DeleteFunction =
+  | typeof deleteContact
+  | typeof deleteItem
+  | typeof deletePayment
+  | typeof deletePosTransaction
+  | typeof deletePurchaseOrder
+  | typeof deleteReceivingVoucher
+  | typeof deleteVendor
+
+type BL_ROOT_URL = typeof BL_QA_ROOT_URL | typeof BL_PROD_ROOT_URL
 
 // const ROOT_URL = 'https://app.bridallive.com'
 // const QA_ROOT_URL = 'https://qa.bridallive.com'
@@ -49,17 +78,17 @@ const COMPANY_ENDPOINTS = {
 //   employees: '/bl-server/api/employees/list'
 // }
 
-// /**
-//  * BridalLive `sales-reports-controller`:
-//  *
-//  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/sales-reports-controller
-//  */
-// const SALES_REPORT_ENDPOINTS = {
-//   byItem: '/bl-server/api/reports/salesReports/salesBy/itemName?',
-//   byDept: '/bl-server/api/reports/salesReports/salesBy/departmentId?',
-//   transactionItemJournal:
-//     '/bl-server/api/reports/salesReports/transactionItemJournal?'
-// }
+/**
+ * BridalLive `sales-reports-controller`:
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/sales-reports-controller
+ */
+const SALES_REPORT_ENDPOINTS = {
+  // byItem: '/bl-server/api/reports/salesReports/salesBy/itemName?',
+  // byDept: '/bl-server/api/reports/salesReports/salesBy/departmentId?',
+  transactionItemJournal:
+    '/bl-server/api/reports/salesReports/transactionItemJournal?',
+}
 
 /**
  * BridalLive `item-controller`:
@@ -69,6 +98,7 @@ const COMPANY_ENDPOINTS = {
 const ITEM_ENDPOINTS = {
   allItems: '/bl-server/api/items/list',
   updateItem: '/bl-server/api/items',
+  createItem: '/bl-server/api/items',
   getItem: '/bl-server/api/items',
   deleteItem: '/bl-server/api/items',
   allAttributes: '/bl-server/api/items/getItemDetailsForLookbook',
@@ -147,6 +177,16 @@ const POS_TRANSACTIONS_ENDPOINTS = {
 }
 
 /**
+ * BridalLive `pos-transaction-controller`:
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/pos-transaction-controller
+ */
+const POS_TRANSACTION_ITEMS_ENDPOINTS = {
+  allPosTransactionItems: '/bl-server/api/posTransactionItems/list?page=0',
+  // deletePosTransactionLineItem: '/bl-server/api/posTransactionItems',
+}
+
+/**
  * BridalLive `payment-controller`:
  *
  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/payment-controller
@@ -174,14 +214,35 @@ const CONTACTS_ENDPOINTS = {
 const VENDORS_ENDPOINTS = {
   allVendors: '/bl-server/api/vendors/list?page=0',
   deleteVendor: '/bl-server/api/vendors',
+  createVendor: '/bl-server/api/vendors',
 }
 
 const DATE_CRITERIA_FORMAT = 'YYYY-MM-DD'
 const MONTH_LABEL_FORMAT = 'YYYY-MM'
 
-const allowMutation = async (token: BridalLiveToken) => {
+const safeFetch = (url: string, options: any) => {
+  const isCustomerAction = global[GLOBAL_IS_CUSTOMER_ACTION_KEY]
+  if (isCustomerAction && url.startsWith(BL_PROD_ROOT_URL)) {
+    logInfo(`...customer fetch: ${url}`)
+    return fetch(url, options)
+  } else if (!isCustomerAction && url.startsWith(BL_QA_ROOT_URL)) {
+    logInfo(`...non-customer fetch: ${url}`)
+    return fetch(url, options)
+  } else {
+    const error = `BridalLive API URL mismatch. This ${
+      isCustomerAction ? 'IS' : 'IS NOT'
+    } a customer action, but it is using the wrong BridalLive environment: ${url}`
+    logSevereError(error, undefined)
+    throw new Error(error)
+  }
+}
+
+const allowMutation = async (rootUrl: BL_ROOT_URL, token: BridalLiveToken) => {
+  // only allow a mutation in the QA BridalLive environment
+  if (rootUrl !== BL_QA_ROOT_URL) return false
+
   try {
-    const company = await fetchBridalLiveCompany(token)
+    const company = await fetchBridalLiveCompany(rootUrl, token)
     const isDemoAccount =
       company.name === BL_DEMO_ACCT_VALIDATION.companyName &&
       company.emailAddress === BL_DEMO_ACCT_VALIDATION.emailAddress
@@ -190,18 +251,26 @@ const allowMutation = async (token: BridalLiveToken) => {
     return true
   } catch (error) {
     logSevereError(
-      'You are attempting to mutate a BridalLive account that DOES NOT match the demo BridalLive account. See `settings.BL_DEMO_ACCT_VALIDATION`. ',
-      null
+      `You are attempting to mutate a BridalLive account that DOES NOT match the demo BridalLive account. See 'settings.BL_DEMO_ACCT_VALIDATION'.`,
+      {
+        expectedCompanyName: BL_DEMO_ACCT_VALIDATION.companyName,
+        expectedCompanyEmail: BL_DEMO_ACCT_VALIDATION.emailAddress,
+        apiRootUrl: rootUrl,
+      }
     )
     return false
   }
 }
 
-const authenticate = async (retailerId: string, apiKey: string) => {
+const authenticate = async (
+  rootUrl: BL_ROOT_URL,
+  retailerId: string,
+  apiKey: string
+) => {
   if (!retailerId || !apiKey || retailerId === '' || apiKey === '') {
     throw new Error('Missing retailer ID or API key')
   }
-  return fetch(BL_ROOT_URL + LOGIN_ENDPOINT, {
+  return safeFetch(rootUrl + LOGIN_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify({
       retailerId: retailerId,
@@ -231,6 +300,7 @@ const authenticate = async (retailerId: string, apiKey: string) => {
  * @param filterCriteria POST request body
  */
 const fetchAllItems = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<FullBridalLiveItem[]> => {
@@ -238,7 +308,7 @@ const fetchAllItems = async (
     throw new Error('Cannot fetch Item list data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + ITEM_ENDPOINTS.allItems, {
+  return safeFetch(rootUrl + ITEM_ENDPOINTS.allItems, {
     method: 'POST',
     body: JSON.stringify(filterCriteria),
     headers: {
@@ -263,6 +333,7 @@ const fetchAllItems = async (
  * @param itemId ID of the item to fetch
  */
 const fetchItem = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   itemId: string | number
 ): Promise<BridalLiveItem> => {
@@ -271,7 +342,7 @@ const fetchItem = async (
     throw new Error('Cannot fetch Item data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + `${ITEM_ENDPOINTS.getItem}/${itemId.toString()}`, {
+  return safeFetch(rootUrl + `${ITEM_ENDPOINTS.getItem}/${itemId.toString()}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -296,6 +367,7 @@ const fetchItem = async (
  * @param itemId ID of the item to fetch
  */
 const deleteItem = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   itemId: string | number
 ): Promise<BridalLiveItem> => {
@@ -304,11 +376,11 @@ const deleteItem = async (
     throw new Error('Cannot delete Item data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL + `${ITEM_ENDPOINTS.deleteItem}/${itemId.toString()}`,
+  return safeFetch(
+    rootUrl + `${ITEM_ENDPOINTS.deleteItem}/${itemId.toString()}`,
     {
       method: 'DELETE',
       headers: {
@@ -327,6 +399,7 @@ const deleteItem = async (
 }
 
 const updateItem = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   item: BridalLiveItem
 ): Promise<BridalLiveItem> => {
@@ -335,7 +408,7 @@ const updateItem = async (
     throw new Error('Cannot update an Item data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
   if (!item.id) {
@@ -343,8 +416,8 @@ const updateItem = async (
     throw new Error('Cannot update Item data without a valid Item ID')
   }
 
-  return fetch(
-    BL_ROOT_URL + `${ITEM_ENDPOINTS.updateItem}/${item.id.toString()}`,
+  return safeFetch(
+    rootUrl + `${ITEM_ENDPOINTS.updateItem}/${item.id.toString()}`,
     {
       method: 'PUT',
       body: JSON.stringify(item),
@@ -364,6 +437,36 @@ const updateItem = async (
     })
 }
 
+const createItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  item: BridalLiveItem
+): Promise<BridalLiveItem> => {
+  if (!token || token === '') {
+    logError('Cannot create an Item data without a valid token', null)
+    throw new Error('Cannot create an Item without a valid token')
+  }
+
+  const allowMutate = await allowMutation(rootUrl, token)
+  if (!allowMutate) return
+
+  return safeFetch(rootUrl + `${ITEM_ENDPOINTS.createItem}`, {
+    method: 'POST',
+    body: JSON.stringify(item),
+    headers: {
+      'Content-Type': 'application/json',
+      token: token,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      return data
+    })
+    .catch((error) => {
+      logError('Failed to create Item data', error)
+      throw new Error('Failed to create Item data')
+    })
+}
 /**
  * Fetch BridalLive purchaseOrders. Uses the purchaseOrders/list endpoint and returns the result.
  *
@@ -372,6 +475,7 @@ const updateItem = async (
  * @param filterCriteria POST request body
  */
 const fetchAllPurchaseOrders = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLivePurchaseOrder[]> => {
@@ -381,7 +485,7 @@ const fetchAllPurchaseOrders = async (
     )
   }
 
-  return fetch(BL_ROOT_URL + PURCHASE_ORDERS_ENDPOINTS.allPurchaseOrders, {
+  return safeFetch(rootUrl + PURCHASE_ORDERS_ENDPOINTS.allPurchaseOrders, {
     method: 'POST',
     body: JSON.stringify(filterCriteria),
     headers: {
@@ -406,6 +510,7 @@ const fetchAllPurchaseOrders = async (
  * @param purchaseOrderId ID of the purchaseOrder to fetch
  */
 const deletePurchaseOrder = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   purchaseOrderId: string | number
 ): Promise<BridalLivePurchaseOrder> => {
@@ -414,11 +519,11 @@ const deletePurchaseOrder = async (
     throw new Error('Cannot delete PurchaseOrder data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${
         PURCHASE_ORDERS_ENDPOINTS.deletePurchaseOrder
       }/${purchaseOrderId.toString()}`,
@@ -440,6 +545,7 @@ const deletePurchaseOrder = async (
 }
 
 const createPurchaseOrderForItems = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   vendorId: string,
   employeeId: string,
@@ -450,11 +556,11 @@ const createPurchaseOrderForItems = async (
     throw new Error('Cannot create a Purchase Order data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${PURCHASE_ORDERS_ENDPOINTS.createPurchaseOrderForItem}/${vendorId}/${employeeId}`,
     {
       method: 'POST',
@@ -476,6 +582,7 @@ const createPurchaseOrderForItems = async (
 }
 
 const updatePurchaseOrder = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   purchaseOrder: BridalLivePurchaseOrder
 ): Promise<BridalLivePurchaseOrder> => {
@@ -484,11 +591,11 @@ const updatePurchaseOrder = async (
     throw new Error('Cannot update a Purchase Order without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       PURCHASE_ORDERS_ENDPOINTS.updatePurchaseOrder.replace(
         ':purchaseOrderId',
         purchaseOrder.id.toString()
@@ -513,6 +620,7 @@ const updatePurchaseOrder = async (
 }
 
 const createReceivingVoucherForPOItems = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   vendorId: string,
   employeeId: string,
@@ -528,11 +636,11 @@ const createReceivingVoucherForPOItems = async (
     )
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${RECEIVING_VOUCHERS_ENDPOINTS.createReceivingVoucherForPOItems}/${employeeId}/${vendorId}`,
     {
       method: 'POST',
@@ -554,6 +662,7 @@ const createReceivingVoucherForPOItems = async (
 }
 
 const updateReceivingVoucher = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   receivingVoucher: BridalLiveReceivingVoucher
 ): Promise<string | object> => {
@@ -567,11 +676,11 @@ const updateReceivingVoucher = async (
     )
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${
         RECEIVING_VOUCHERS_ENDPOINTS.updateReceivingVoucher
       }/${receivingVoucher.id.toString()}`,
@@ -602,6 +711,7 @@ const updateReceivingVoucher = async (
  * @param filterCriteria POST request body
  */
 const fetchAllReceivingVouchers = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLiveReceivingVoucher[]> => {
@@ -611,8 +721,8 @@ const fetchAllReceivingVouchers = async (
     )
   }
 
-  return fetch(
-    BL_ROOT_URL + RECEIVING_VOUCHERS_ENDPOINTS.allReceivingVouchers,
+  return safeFetch(
+    rootUrl + RECEIVING_VOUCHERS_ENDPOINTS.allReceivingVouchers,
     {
       method: 'POST',
       body: JSON.stringify(filterCriteria),
@@ -639,6 +749,7 @@ const fetchAllReceivingVouchers = async (
  * @param receivingVoucherId ID of the receivingVoucher to fetch
  */
 const deleteReceivingVoucher = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   receivingVoucherId: string | number
 ): Promise<BridalLiveReceivingVoucher> => {
@@ -647,11 +758,11 @@ const deleteReceivingVoucher = async (
     throw new Error('Cannot delete ReceivingVoucher data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${
         RECEIVING_VOUCHERS_ENDPOINTS.deleteReceivingVoucher
       }/${receivingVoucherId.toString()}`,
@@ -672,6 +783,7 @@ const deleteReceivingVoucher = async (
 }
 
 const completeReceivingVoucher = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   receivingVoucherId: string | number
 ): Promise<BridalLiveReceivingVoucher> => {
@@ -685,11 +797,11 @@ const completeReceivingVoucher = async (
     )
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${
         RECEIVING_VOUCHERS_ENDPOINTS.updateReceivingVoucher
       }/${receivingVoucherId.toString()}/complete`,
@@ -719,6 +831,7 @@ const completeReceivingVoucher = async (
  * @param filterCriteria POST request body
  */
 const fetchAllPosTransactions = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLivePosTransaction[]> => {
@@ -728,7 +841,7 @@ const fetchAllPosTransactions = async (
     )
   }
 
-  return fetch(BL_ROOT_URL + POS_TRANSACTIONS_ENDPOINTS.allPosTransactions, {
+  return safeFetch(rootUrl + POS_TRANSACTIONS_ENDPOINTS.allPosTransactions, {
     method: 'POST',
     body: JSON.stringify(filterCriteria),
     headers: {
@@ -753,6 +866,7 @@ const fetchAllPosTransactions = async (
  * @param posTransactionId ID of the posTransaction to fetch
  */
 const deletePosTransaction = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   posTransactionId: string | number
 ): Promise<BridalLivePosTransaction> => {
@@ -761,11 +875,11 @@ const deletePosTransaction = async (
     throw new Error('Cannot delete PosTransaction data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL +
+  return safeFetch(
+    rootUrl +
       `${
         POS_TRANSACTIONS_ENDPOINTS.deletePosTransaction
       }/${posTransactionId.toString()}`,
@@ -786,6 +900,45 @@ const deletePosTransaction = async (
 }
 
 /**
+ * Fetch BridalLive posTransactionLineItemLineItems. Uses the posTransactionLineItemLineItems/list endpoint and returns the result.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-controller/listUsingPOST_52
+ * @param token BridalLive token used to authenticate the request
+ * @param filterCriteria POST request body
+ */
+const fetchAllPosTransactionItems = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: ItemListCriteria
+): Promise<BridalLivePosTransactionLineItem[]> => {
+  if (!token || token === '') {
+    throw new Error(
+      'Cannot fetch PosTransactionLineItem list data without a valid token'
+    )
+  }
+
+  return safeFetch(
+    rootUrl + POS_TRANSACTION_ITEMS_ENDPOINTS.allPosTransactionItems,
+    {
+      method: 'POST',
+      body: JSON.stringify(filterCriteria),
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.result) return data.result as BridalLivePosTransactionLineItem[]
+    })
+    .catch((error) => {
+      console.log(error)
+      throw new Error('Failed to fetch PosTransactionLineItem list data')
+    })
+}
+
+/**
  * Fetch BridalLive payments. Uses the payments/list endpoint and returns the result.
  *
  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-controller/listUsingPOST_52
@@ -793,6 +946,7 @@ const deletePosTransaction = async (
  * @param filterCriteria POST request body
  */
 const fetchAllPayments = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLivePayment[]> => {
@@ -800,7 +954,7 @@ const fetchAllPayments = async (
     throw new Error('Cannot fetch Payment list data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + PAYMENTS_ENDPOINTS.allPayments, {
+  return safeFetch(rootUrl + PAYMENTS_ENDPOINTS.allPayments, {
     method: 'POST',
     body: JSON.stringify(filterCriteria),
     headers: {
@@ -825,6 +979,7 @@ const fetchAllPayments = async (
  * @param paymentId ID of the payment to fetch
  */
 const deletePayment = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   paymentId: string | number
 ): Promise<BridalLivePayment> => {
@@ -833,11 +988,11 @@ const deletePayment = async (
     throw new Error('Cannot delete Payment data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL + `${PAYMENTS_ENDPOINTS.deletePayment}/${paymentId.toString()}`,
+  return safeFetch(
+    rootUrl + `${PAYMENTS_ENDPOINTS.deletePayment}/${paymentId.toString()}`,
     {
       method: 'DELETE',
       headers: {
@@ -863,6 +1018,7 @@ const deletePayment = async (
  * @param filterCriteria POST request body
  */
 const fetchAllContacts = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
 ): Promise<BridalLiveContact[]> => {
@@ -870,7 +1026,7 @@ const fetchAllContacts = async (
     throw new Error('Cannot fetch Contact list data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + CONTACTS_ENDPOINTS.allContacts, {
+  return safeFetch(rootUrl + CONTACTS_ENDPOINTS.allContacts, {
     method: 'POST',
     body: JSON.stringify(filterCriteria),
     headers: {
@@ -895,6 +1051,7 @@ const fetchAllContacts = async (
  * @param contactId ID of the contact to fetch
  */
 const deleteContact = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   contactId: string | number
 ): Promise<BridalLiveContact> => {
@@ -903,11 +1060,11 @@ const deleteContact = async (
     throw new Error('Cannot delete Contact data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL + `${CONTACTS_ENDPOINTS.deleteContact}/${contactId.toString()}`,
+  return safeFetch(
+    rootUrl + `${CONTACTS_ENDPOINTS.deleteContact}/${contactId.toString()}`,
     {
       method: 'DELETE',
       headers: {
@@ -932,14 +1089,15 @@ const deleteContact = async (
  * @param filterCriteria POST request body
  */
 const fetchAllVendors = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   filterCriteria: ItemListCriteria
-): Promise<BridalLiveVendor> => {
+): Promise<BridalLiveVendor[]> => {
   if (!token || token === '') {
     throw new Error('Cannot fetch Vendor list data without a valid token')
   }
 
-  return fetch(BL_ROOT_URL + VENDORS_ENDPOINTS.allVendors, {
+  return safeFetch(rootUrl + VENDORS_ENDPOINTS.allVendors, {
     method: 'POST',
     body: JSON.stringify(filterCriteria),
     headers: {
@@ -964,6 +1122,7 @@ const fetchAllVendors = async (
  * @param vendorId ID of the vendor to fetch
  */
 const deleteVendor = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
   vendorId: string | number
 ): Promise<BridalLiveVendor> => {
@@ -972,11 +1131,11 @@ const deleteVendor = async (
     throw new Error('Cannot delete Vendor data without a valid token')
   }
 
-  const allowMutate = await allowMutation(token)
+  const allowMutate = await allowMutation(rootUrl, token)
   if (!allowMutate) return
 
-  return fetch(
-    BL_ROOT_URL + `${VENDORS_ENDPOINTS.deleteVendor}/${vendorId.toString()}`,
+  return safeFetch(
+    rootUrl + `${VENDORS_ENDPOINTS.deleteVendor}/${vendorId.toString()}`,
     {
       method: 'DELETE',
       headers: {
@@ -993,6 +1152,72 @@ const deleteVendor = async (
   })
 }
 
+const createVendor = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  vendor: BridalLiveVendor
+): Promise<BridalLiveVendor> => {
+  if (!token || token === '') {
+    logError('Cannot create an Vendor data without a valid token', null)
+    throw new Error('Cannot create an Vendor without a valid token')
+  }
+
+  const allowMutate = await allowMutation(rootUrl, token)
+  if (!allowMutate) return
+
+  return safeFetch(rootUrl + `${VENDORS_ENDPOINTS.createVendor}`, {
+    method: 'POST',
+    body: JSON.stringify(vendor),
+    headers: {
+      'Content-Type': 'application/json',
+      token: token,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      return data
+    })
+    .catch((error) => {
+      logError('Failed to create Vendor data', error)
+      throw new Error('Failed to create Vendor data')
+    })
+}
+
+/**
+ * Fetch BridalLive transactionItemJournals. Uses the transactionItemJournals/list endpoint and returns the result.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-controller/listUsingPOST_52
+ * @param token BridalLive token used to authenticate the request
+ * @param filterCriteria POST request body
+ */
+const fetchAllTransactionItemJournals = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: ItemListCriteria
+): Promise<BridalLiveItemTransaction[]> => {
+  if (!token || token === '') {
+    throw new Error(
+      'Cannot fetch TransactionItemJournal list data without a valid token'
+    )
+  }
+
+  return safeFetch(rootUrl + SALES_REPORT_ENDPOINTS.transactionItemJournal, {
+    method: 'POST',
+    body: JSON.stringify(filterCriteria),
+    headers: {
+      'Content-Type': 'application/json',
+      token: token,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.result) return data.result as BridalLiveItemTransaction[]
+    })
+    .catch(() => {
+      throw new Error('Failed to fetch TransactionItemJournal list data')
+    })
+}
+
 /**
  * Fetch BridalLiveCompany item for retailerId and apiKey.
  * Uses the BridalLive `company-controller`:
@@ -1001,6 +1226,7 @@ const deleteVendor = async (
  * @param token BridalLive token used to authenticate the request
  */
 const fetchBridalLiveCompany = async (
+  rootUrl: BL_ROOT_URL,
   token: BridalLiveToken
 ): Promise<BridalLiveCompany> => {
   if (!token || token === '') {
@@ -1009,7 +1235,7 @@ const fetchBridalLiveCompany = async (
       'Cannot fetch BridalLive Company data without a valid token'
     )
   }
-  return fetch(BL_ROOT_URL + COMPANY_ENDPOINTS.company, {
+  return safeFetch(rootUrl + COMPANY_ENDPOINTS.company, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -1024,28 +1250,6 @@ const fetchBridalLiveCompany = async (
       logError('Failed to fetch BridalLive Company data', error)
       throw new Error('Failed to fetch BridalLive Company data')
     })
-  // return
-  // fetch(BL_ROOT_URL + COMPANY_ENDPOINTS.company, {
-  //   method: 'GET',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //     token: token
-  //   }
-  // })
-  //   .then(res => res.json())
-  //   .then((data: BridalLiveCompany) => {
-  //     console.log('data', data)
-  //     return data
-  //   })
-  //   .catch(error => {
-  //     console.log('failed to fetch company')
-  //     logError(
-  //       'Failed to fetch BridalLive Company data',
-  //       'fetchBridalLiveCompany',
-  //       error
-  //     )
-  //     throw new Error('Failed to fetch BridalLive Company data')
-  //   })
 }
 
 export default {
@@ -1055,6 +1259,7 @@ export default {
   fetchAllItems,
   fetchItem,
   deleteItem,
+  createItem,
   fetchAllPurchaseOrders,
   createPurchaseOrderForItems,
   updatePurchaseOrder,
@@ -1067,11 +1272,14 @@ export default {
   completeReceivingVoucher,
   fetchAllPosTransactions,
   deletePosTransaction,
+  fetchAllPosTransactionItems,
   fetchAllPayments,
   deletePayment,
   fetchAllContacts,
   deleteContact,
   fetchAllVendors,
   deleteVendor,
+  createVendor,
   fetchBridalLiveCompany,
+  fetchAllTransactionItemJournals,
 }

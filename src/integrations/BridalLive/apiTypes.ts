@@ -180,8 +180,8 @@ export interface BridalLiveStoreSettingsData {
 
 export interface BridalLiveApiCredentials {
   retailerId: string
+  apiAccess: boolean
   apiKey: string
-  apiAccess?: boolean
 }
 
 export interface BridalCustomerSettings {
@@ -296,7 +296,7 @@ export interface FullBridalLiveItem extends BridalLiveItem {
   images: BridalLiveItemImage[] | null // This will be null until combined by BridalLiveData.combineItemData
 }
 
-export interface BridalLiveItemTransaction {
+export interface BridalLiveItemTransaction extends BaseBridalLiveObject {
   adjPrice: number // 300
   balanceDue: number // 0
   color: string | null // null
@@ -830,7 +830,7 @@ export interface FullReceivingVoucherItemWithRV
 //   }
 // }
 
-export interface BridalLivePayment {
+export interface BridalLivePayment extends BaseBridalLiveObject {
   amount: number
   amountRefunded: number
   changeAmount: number
@@ -895,7 +895,7 @@ export interface BridalLivePayment {
   yearMonth: string
 }
 
-export interface BridalLiveVendor {
+export interface BridalLiveVendor extends BaseBridalLiveObject {
   accountNumber: string
   address1: string
   address2: string

@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import commander from 'commander'
 import * as packgeJSON from '../../package.json'
-import { cleanDemoAccount, populateDemoAccount } from '../main'
-import { GLOBAL_DEBUG_KEY } from '../settings'
+import { cleanDemoAccount, fetch } from '../main'
+import { GLOBAL_DEBUG_KEY, GLOBAL_IS_CUSTOMER_ACTION_KEY } from '../settings'
+
+// make sure  GLOBAL_IS_CUSTOMER_ACTION_KEY defaults to false
+global[GLOBAL_IS_CUSTOMER_ACTION_KEY] = false
 
 const program = new commander.Command()
 
@@ -27,16 +30,17 @@ program
 
 program
   .command('all')
-  .description('Runs all demo tool commands in order')
+  .description(
+    'Runs all commands that update the demo BridalLive account (QA) in the proper order. NOTE: The "fetch" command is not run; it must be explicitly executed as a safety measure, since it connects to the PROD BridalLive environment.'
+  )
   .action(async ({ parent }) => {
     setGlobalDebug(parent.debug)
     await cleanDemoAccount()
-    await populateDemoAccount()
   })
 program
   .command('clean')
   .description(
-    'Cleans up the demo BridalLive account by removing all exisiting data'
+    'Cleans up the demo BridalLive account (QA) by removing all exisiting data'
   )
   .action(({ parent }) => {
     setGlobalDebug(parent.debug)
@@ -44,13 +48,18 @@ program
   })
 
 program
-  .command('populate')
+  .command('fetch')
   .description(
-    'Populates the demo BridalLive account by adding data from other customer BridalLive accounts. NOTE: All interactions with customer BridalLive accounts are READ-ONLY. No data will be updated in their accounts.'
+    'Fetches customer data from BridalLive (PROD) and writes it to JSON files. NOTE: All interactions with customer BridalLive accounts are READ-ONLY. No data will be updated in their accounts.'
   )
   .action(({ parent }) => {
+    // Set this as a customer action so non-mutating API calls are allowed
+    // against the PROD BridalLive environment
+    // NO OTHER COMMANDS SHOULD RUN AS CUSTOMER ACTIONS
+    global[GLOBAL_IS_CUSTOMER_ACTION_KEY] = true
+
     setGlobalDebug(parent.debug)
-    populateDemoAccount()
+    fetch()
   })
 
 program.parse(process.argv)

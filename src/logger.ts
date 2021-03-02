@@ -4,17 +4,24 @@ import { GLOBAL_DEBUG_KEY } from './settings'
 
 const header = chalk.bold.white
 const info = chalk.white
+const success = chalk.green
 const error = chalk.bold.red
 const errorDetails = chalk.red
 const warning = chalk.keyword('orange')
 
 export const logHeader = (message: string) => {
+  console.log('\n')
   console.log(header(message))
 }
 
 export const logInfo = (message: string | object) => {
   if (typeof message === 'string') console.log(info(message))
   else console.log(info(JSON.stringify(message)))
+}
+
+export const logSuccess = (message: string | object) => {
+  if (typeof message === 'string') console.log(success(message))
+  else console.log(success(JSON.stringify(message)))
 }
 
 export const logError = (message: string, errorObject: object | null) => {

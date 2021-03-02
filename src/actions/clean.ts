@@ -1,9 +1,13 @@
-import BridalLiveApi from '../integrations/BridalLive/api'
+import BridalLiveApi, {
+  DeleteFunction,
+  FetchAllFunction,
+} from '../integrations/BridalLive/api'
 import {
   BaseBridalLiveObject,
   BridalLiveToken,
 } from '../integrations/BridalLive/apiTypes'
-import { logError, logHeader, logInfo } from '../logger'
+import { logError, logHeader, logInfo, logSuccess } from '../logger'
+import { BL_QA_ROOT_URL } from '../settings'
 
 const cleanBridalLiveDemoAccount = async (
   demoAccounttoken: BridalLiveToken
@@ -15,7 +19,8 @@ const cleanBridalLiveDemoAccount = async (
       'purchaseOrder',
       demoAccounttoken,
       BridalLiveApi.fetchAllPurchaseOrders,
-      BridalLiveApi.deletePurchaseOrder
+      BridalLiveApi.deletePurchaseOrder,
+      { orderType: '', status: '' }
     )
     // fetch and delete receiving orders
     await fetchAllAndDelete(
@@ -51,7 +56,8 @@ const cleanBridalLiveDemoAccount = async (
       'vendor',
       demoAccounttoken,
       BridalLiveApi.fetchAllVendors,
-      BridalLiveApi.deleteVendor
+      BridalLiveApi.deleteVendor,
+      { status: '', isVendorVisibleOnLookbook: '' }
     )
     // fetch and delete contacts
     await fetchAllAndDelete(
@@ -66,25 +72,30 @@ const cleanBridalLiveDemoAccount = async (
 }
 
 const fetchAllAndDelete = async (
-  itemType,
-  token,
-  fetchAllFn,
-  deleteFn,
+  itemType: string,
+  token: BridalLiveToken,
+  fetchAllFn: FetchAllFunction,
+  deleteFn: DeleteFunction,
   fetchAllFilter = {}
 ) => {
   // fetch and delete items
+  logInfo('')
   logInfo(`Fetching all ${itemType}s`)
-  const items: BaseBridalLiveObject[] = await fetchAllFn(token, fetchAllFilter)
+  const items: BaseBridalLiveObject[] = await fetchAllFn(
+    BL_QA_ROOT_URL,
+    token,
+    fetchAllFilter
+  )
   if (items && items.length > 0) {
     logInfo(`...found ${items.length} ${itemType}s that need to be deleted`)
   } else {
-    logInfo(`...no ${itemType}s need to be deleted`)
+    logSuccess(`...No ${itemType}s need to be deleted`)
   }
   for (const item of items) {
     try {
       logInfo(`\tAttempting to delete ${itemType} with id: ${item.id}`)
-      await deleteFn(token, item.id)
-      logInfo(`\t...deleted ${item.id}`)
+      await deleteFn(BL_QA_ROOT_URL, token, item.id)
+      logSuccess(`\t...Deleted ${item.id}`)
     } catch (error) {
       logError(`Error while deleting ${itemType}`, error)
     }
