@@ -29,7 +29,6 @@ export interface BridalLiveError {
 }
 export interface BridalLiveCompany extends BaseBridalLiveObject {
   version: number
-  retailerId: string // "fa96bd3d"
   createdDate: number // 1551111009000
   createdByUser: string // ""
   modifiedDate: null
@@ -108,7 +107,6 @@ export interface BridalLiveCompany extends BaseBridalLiveObject {
 export interface BridalLiveDepartment extends BaseBridalLiveObject {
   // 59269,
   version: number // 1,
-  retailerId: string // 'fa96bd3d',
   createdDate: number // 1551111010000,
   createdByUser: string // '',
   modifiedDate: number // 1556745360000,
@@ -135,7 +133,6 @@ export interface BridalLiveDepartment extends BaseBridalLiveObject {
 export interface BridalLiveEmployee extends BaseBridalLiveObject {
   // 30092,
   version: number // 7,
-  retailerId: string // "5b19f2a7",
   createdDate: number // 1579124095077,
   createdByUser: string // "",
   modifiedDate: null
@@ -192,13 +189,13 @@ export interface BridalCustomerSettings {
 }
 export interface BaseBridalLiveObject {
   id: number // 1948588,
+  retailerId: string // "5b19f2a7",
 }
 /**
  * The item returned by BridalLive's `/bl-server/api/items/list` endpoint
  */
 export interface BridalLiveItem extends BaseBridalLiveObject {
   version: number // 5,
-  retailerId: string // "5b19f2a7",
   createdDate: number // 1484247128000,
   createdByUser: string // "Shannon",
   modifiedDate: number // 1553784630000,
@@ -211,7 +208,7 @@ export interface BridalLiveItem extends BaseBridalLiveObject {
   itemNumber: number // 1320,
   name: string // "Beckett",
   description: null
-  notes: null
+  notes: string | null
   quantityOnHand: number // 4,
   reorderPoint: null
   color: string // "Ivory/Ivory/Ivory",
@@ -308,7 +305,6 @@ export interface BridalLiveItemTransaction extends BaseBridalLiveObject {
   itemId: number // 1398153
   itemName: string // "Alex*"
   qty: number // 1
-  retailerId: string | null // null
   size: string | null // null
   storeNickName: string | null // null
   taxAmount: number // 0
@@ -344,7 +340,6 @@ export interface BridalLiveReceivingEntry {
 
 export interface BridalLiveContact extends BaseBridalLiveObject {
   version: number //0;
-  retailerId: string //'fa96bd3d';
   createdDate: number //1570205417000;
   createdByUser: string //'butterfly';
   modifiedDate: number // 1570205417000;
@@ -438,7 +433,6 @@ export interface BridalLiveContact extends BaseBridalLiveObject {
 export interface BridalLivePosTransactionLineItem extends BaseBridalLiveObject {
   //9851261;
   version: number //3;
-  retailerId: string //fa96bd3d';
   createdDate: number //1609341744000;
   createdByUser: string //butterfly';
   modifiedDate: number //1609341750000;
@@ -533,7 +527,6 @@ export interface BridalLivePosTransactionLineItem extends BaseBridalLiveObject {
 export interface BridalLivePosTransaction extends BaseBridalLiveObject {
   //5632736;
   version: number //5;
-  retailerId: string //fa96bd3d';
   createdDate: number //1609341721000;
   createdByUser: string //butterfly';
   modifiedDate: number //1609341804000;
@@ -632,7 +625,6 @@ export interface BridalLivePosTransaction extends BaseBridalLiveObject {
 export interface BridalLivePurchaseOrder extends BaseBridalLiveObject {
   // 520
   version: number // 0
-  retailerId: string // '5b19f2a7'
   createdDate: number // 1401992507000
   createdByUser: string // 'Emmy'
   modifiedDate: number // 1401998960000
@@ -677,7 +669,6 @@ export interface BridalLivePurchaseOrder extends BaseBridalLiveObject {
 export interface BridalLivePurchaseOrderItem extends BaseBridalLiveObject {
   // 1354
   version: number // 0
-  retailerId: string // '5b19f2a7'
   createdDate: number // 1400173630000
   createdByUser: string // 'Emmy'
   modifiedDate: number // 1404415370000
@@ -735,7 +726,6 @@ export interface FullPurchaseOrderItemWithPO
 export interface BridalLiveReceivingVoucherItem extends BaseBridalLiveObject {
   // 948
   version: number //  0
-  retailerId: string // '5b19f2a7'
   createdDate: number // 1402596501000
   createdByUser: string // 'Emmy'
   modifiedDate: number // 1402596501000
@@ -776,7 +766,6 @@ export interface BridalLiveReceivingVoucherItem extends BaseBridalLiveObject {
 export interface BridalLiveReceivingVoucher extends BaseBridalLiveObject {
   // 598,
   version: number // 0,
-  retailerId: string // "5b19f2a7",
   createdDate: number // 1402596501000,
   createdByUser: string // "Emmy",
   modifiedDate: number // 1402596501000,
@@ -845,7 +834,6 @@ export interface BridalLivePayment extends BaseBridalLiveObject {
   feeAmount: number
   fundedAmount: number
   fundedDate: string
-  id: number
   methodDescription: string
   methodId: number
   modifiedByUser: string
@@ -867,7 +855,6 @@ export interface BridalLivePayment extends BaseBridalLiveObject {
   receiptHTML: string
   receiptNumber: number
   registerId: number
-  retailerId: string
   retailerIds: any[]
   sequenceNumber: number
   signature: any
@@ -908,7 +895,6 @@ export interface BridalLiveVendor extends BaseBridalLiveObject {
   displayOnLookbook: boolean
   emailAddress: string
   faxNumber: string
-  id: number
   imageUrl: string
   isVendorVisibleOnLookbook: string
   marketplaceId: number
@@ -919,7 +905,6 @@ export interface BridalLiveVendor extends BaseBridalLiveObject {
   notes: string
   phoneNumber: string
   qbListId: string
-  retailerId: string
   retailerIds: any[]
   retailerName: string
   sizeGroups: any[]
@@ -952,7 +937,6 @@ export interface LookbookAttribute extends BaseBridalLiveObject {
 export interface BridalLiveItemImage extends BaseBridalLiveObject {
   // 4298
   version: number // 0
-  retailerId: string // '5b19f2a7'
   createdDate: number // 1409864156000
   createdByUser: string // 'Shannon'
   modifiedDate: number // 1409864156000

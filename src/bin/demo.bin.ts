@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 import commander from 'commander'
 import * as packgeJSON from '../../package.json'
-import { cleanDemoAccount, fetch } from '../main'
-import { GLOBAL_DEBUG_KEY, GLOBAL_IS_CUSTOMER_ACTION_KEY } from '../settings'
+import showJosh from '../actions/josh'
+import { cleanDemoAccount, fetch, populateDemoAccount } from '../main'
+import {
+  CUSTOMER_DATA_DIR,
+  GLOBAL_DEBUG_KEY,
+  GLOBAL_IS_CUSTOMER_ACTION_KEY,
+} from '../settings'
 
 // make sure  GLOBAL_IS_CUSTOMER_ACTION_KEY defaults to false
 global[GLOBAL_IS_CUSTOMER_ACTION_KEY] = false
 
 const program = new commander.Command()
-
-const clean = () => {
-  const fileName = commander.write
-  // if (fileName) {
-  //     writeFile(fileName, { food, drink });
-  // }
-}
 
 const setGlobalDebug = (debug) => {
   global[GLOBAL_DEBUG_KEY] = debug === true
@@ -36,6 +34,7 @@ program
   .action(async ({ parent }) => {
     setGlobalDebug(parent.debug)
     await cleanDemoAccount()
+    await populateDemoAccount()
   })
 program
   .command('clean')
@@ -45,6 +44,24 @@ program
   .action(({ parent }) => {
     setGlobalDebug(parent.debug)
     cleanDemoAccount()
+  })
+program
+  .command('populate')
+  .description(
+    `Populates the demo BridalLive account (QA) using customer data json files in ${CUSTOMER_DATA_DIR}`
+  )
+  .action(({ parent }) => {
+    setGlobalDebug(parent.debug)
+    populateDemoAccount()
+  })
+program
+  .command('josh')
+  .description(
+    'Demonstrates security bug that allowed Heba data to be mutated.'
+  )
+  .action(({ parent }) => {
+    setGlobalDebug(parent.debug)
+    showJosh()
   })
 
 program

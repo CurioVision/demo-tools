@@ -2,7 +2,7 @@
 // BridalLive types, in a single node package that app & functions can import
 
 import fetch from 'node-fetch'
-import { logError, logInfo, logSevereError } from '../../logger'
+import { logDebug, logError, logSevereError } from '../../logger'
 import {
   BL_DEMO_ACCT_VALIDATION,
   BL_PROD_ROOT_URL,
@@ -13,6 +13,7 @@ import {
   BridalLiveCompany,
   BridalLiveContact,
   BridalLiveItem,
+  BridalLiveItemImage,
   BridalLiveItemTransaction,
   BridalLivePayment,
   BridalLivePosTransaction,
@@ -20,9 +21,12 @@ import {
   BridalLivePurchaseOrder,
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucher,
+  BridalLiveResponse,
   BridalLiveToken,
   BridalLiveVendor,
   FullBridalLiveItem,
+  ItemDetailsForLookbookCriteria,
+  ItemImagesCriteria,
   ItemListCriteria,
 } from './apiTypes'
 
@@ -45,6 +49,15 @@ export type DeleteFunction =
   | typeof deletePurchaseOrder
   | typeof deleteReceivingVoucher
   | typeof deleteVendor
+
+export type CreateFunction =
+  // | typeof createContact
+  | typeof createItem
+  // | typeof createPayment
+  // | typeof createPosTransaction
+  // | typeof createPurchaseOrder
+  // | typeof createReceivingVoucher
+  | typeof createVendor
 
 type BL_ROOT_URL = typeof BL_QA_ROOT_URL | typeof BL_PROD_ROOT_URL
 
@@ -102,17 +115,23 @@ const ITEM_ENDPOINTS = {
   getItem: '/bl-server/api/items',
   deleteItem: '/bl-server/api/items',
   allAttributes: '/bl-server/api/items/getItemDetailsForLookbook',
-  updateItemAttributes: '/bl-server/api/itemItemAttributes', // UNDOCUMENTED, but used in Bridal Live app
 }
 
-// /**
-//  * BridalLive `item-picture-controller`:
-//  *
-//  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/item-picture-controller
-//  */
-// const ITEM_PICTURE_ENDPOINTS = {
-//   allPictures: '/bl-server/api/itemPictures/list'
-// }
+const ITEM_ATTRIBUTE_ENDPOINTS = {
+  allItemAttributes: '/bl-server/api/itemItemAttributes/list',
+  updateItemAttributes: '/bl-server/api/itemItemAttributes',
+  deleteItemAttributes: '/bl-server/api/itemItemAttributes',
+}
+
+/**
+ * BridalLive `item-picture-controller`:
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/item-picture-controller
+ */
+const ITEM_PICTURE_ENDPOINTS = {
+  allPictures: '/bl-server/api/itemPictures/list',
+  deletePicture: '/bl-server/api/itemPictures',
+}
 
 // /**
 //  * BridalLive `purchase-reports-controller`:
@@ -223,10 +242,10 @@ const MONTH_LABEL_FORMAT = 'YYYY-MM'
 const safeFetch = (url: string, options: any) => {
   const isCustomerAction = global[GLOBAL_IS_CUSTOMER_ACTION_KEY]
   if (isCustomerAction && url.startsWith(BL_PROD_ROOT_URL)) {
-    logInfo(`...customer fetch: ${url}`)
+    logDebug(`...customer request: ${url}`)
     return fetch(url, options)
   } else if (!isCustomerAction && url.startsWith(BL_QA_ROOT_URL)) {
-    logInfo(`...non-customer fetch: ${url}`)
+    logDebug(`...non-customer request: ${url}`)
     return fetch(url, options)
   } else {
     const error = `BridalLive API URL mismatch. This ${
@@ -1218,6 +1237,105 @@ const fetchAllTransactionItemJournals = async (
     })
 }
 
+const fetchAllAttributesByItem = (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: ItemDetailsForLookbookCriteria
+) => {
+  if (!token || token === '') {
+    throw new Error('Cannot fetch attribute data without a valid token')
+  }
+
+  return safeFetch(rootUrl + ITEM_ENDPOINTS.allAttributes, {
+    method: 'POST',
+    body: JSON.stringify(filterCriteria),
+    headers: {
+      'Content-Type': 'application/json',
+      token: token,
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.attributes) return data.attributes
+    })
+    .catch(() => {
+      throw new Error('Failed to fetch attribute data')
+    })
+}
+
+/**
+ * Detele BridalLive item by id. Uses the items/{id} endpoint.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/item-controller/deleteUsingDELETE_32
+ * @param token BridalLive token used to authenticate the request
+ * @param itemId ID of the item to fetch
+ */
+const deleteItemAttribute = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  itemId: string | number
+): Promise<BridalLiveItem> => {
+  if (!token || token === '') {
+    logError('Cannot delete Item data without a valid token', null)
+    throw new Error('Cannot delete Item data without a valid token')
+  }
+
+  const allowMutate = await allowMutation(rootUrl, token)
+  if (!allowMutate) return
+
+  return safeFetch(
+    rootUrl + `${ITEM_ENDPOINTS.deleteItem}/${itemId.toString()}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+      body: {},
+    }
+  ).then((data) => {
+    if (data.errors && data.errors.length > 0) {
+      throw data
+    } else {
+      return data
+    }
+  })
+}
+
+/**
+ * Fetch a list of BridalLive item images. Uses the item picture endpoint and
+ * returns the result.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/item-picture-controller
+ * @param token BridalLive token used to authenticate the request
+ * @param filterCriteria POST request body
+ */
+const fetchAllItemImages = (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: ItemImagesCriteria
+) => {
+  if (!token || token === '') {
+    throw new Error('Cannot fetch Item images without a valid token')
+  }
+
+  return safeFetch(rootUrl + ITEM_PICTURE_ENDPOINTS.allPictures, {
+    method: 'POST',
+    body: JSON.stringify(filterCriteria),
+    headers: {
+      'Content-Type': 'application/json',
+      token: token,
+    },
+  })
+    .then((res) => res.json())
+    .then((data: BridalLiveResponse<BridalLiveItemImage>) => {
+      return data.result
+    })
+    .catch(() => {
+      throw new Error('Failed to fetch Item list data')
+    })
+}
+
 /**
  * Fetch BridalLiveCompany item for retailerId and apiKey.
  * Uses the BridalLive `company-controller`:
@@ -1282,4 +1400,6 @@ export default {
   createVendor,
   fetchBridalLiveCompany,
   fetchAllTransactionItemJournals,
+  fetchAllItemImages,
+  fetchAllAttributesByItem,
 }

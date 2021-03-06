@@ -1,53 +1,19 @@
 import boxen from 'boxen'
 import chalk from 'chalk'
-import ObjectsToCsv from 'objects-to-csv'
+import fs from 'fs'
 import BridalLiveAPI, { FetchAllFunction } from '../integrations/BridalLive/api'
 import {
   BaseBridalLiveObject,
   BridalCustomerSettings,
-  BridalLiveContact,
-  BridalLiveItem,
-  BridalLivePayment,
-  BridalLivePosTransaction,
-  BridalLivePosTransactionLineItem,
-  BridalLivePurchaseOrder,
-  BridalLiveReceivingVoucher,
   BridalLiveToken,
-  BridalLiveVendor,
 } from '../integrations/BridalLive/apiTypes'
 import { logError, logHeader, logInfo, logSuccess } from '../logger'
-import { BL_CUSTOMER_ACCTS, BL_PROD_ROOT_URL } from '../settings'
-interface BridalLiveCustomerData {
-  items: { [id: number]: BridalLiveItem }
-  contacts: { [id: number]: BridalLiveContact }
-  purchaseOrders: { [id: number]: BridalLivePurchaseOrder }
-  receivingVouchers: { [id: number]: BridalLiveReceivingVoucher }
-  posTransactions: { [id: number]: BridalLivePosTransaction }
-  posTransactionItems: { [id: number]: BridalLivePosTransactionLineItem }
-  vendors: { [id: number]: BridalLiveVendor }
-  payments: { [id: number]: BridalLivePayment }
-}
-
-type TrackedBridalLiveTypes =
-  | BridalLiveItem
-  | BridalLiveContact
-  | BridalLivePurchaseOrder
-  | BridalLiveReceivingVoucher
-  | BridalLivePosTransaction
-  | BridalLivePosTransactionLineItem
-  | BridalLiveVendor
-  | BridalLivePayment
-interface DemoData<T> {
-  newId: number
-  cleanData: T
-}
-
-interface DemoItemData extends DemoData<BridalLiveItem> {}
-interface DemoVendorData extends DemoData<BridalLiveVendor> {}
-interface BridalLiveDemoData {
-  items: { [id: number]: DemoItemData }
-  vendors: { [id: number]: DemoVendorData }
-}
+import {
+  BL_CUSTOMER_ACCTS,
+  BL_PROD_ROOT_URL,
+  CUSTOMER_DATA_FILES,
+} from '../settings'
+import { BridalLiveCustomerData } from '../types'
 
 const fetchCustomerData = async () => {
   try {
@@ -55,12 +21,15 @@ const fetchCustomerData = async () => {
       BL_CUSTOMER_ACCTS[0]
     )
     if (customerToken) {
-      const customerData = await fetchAllDataFromCustomer(customerToken)
-      const file = './HebaItems.csv'
-      logInfo(`Writing CSV: ${file}`)
-      const csv = new ObjectsToCsv(Object.values(customerData.items))
-      await csv.toDisk(file)
-      logSuccess('Wrote csv file')
+      const customerData = await fetchAllDataFromCustomer(
+        customerToken,
+        BL_CUSTOMER_ACCTS[0].gownDeptId
+      )
+      _writeDataFile(CUSTOMER_DATA_FILES.gowns, customerData.gowns)
+      _writeDataFile(CUSTOMER_DATA_FILES.vendors, customerData.vendors)
+      _writeDataFile(CUSTOMER_DATA_FILES.attributes, customerData.attributes)
+      _writeDataFile(CUSTOMER_DATA_FILES.itemImages, customerData.itemImages)
+      logSuccess('Wrote customer data files')
     }
   } catch (error) {
     logError('Error occurred while populating BridalLive demo account', error)
@@ -106,15 +75,38 @@ export const authenticateCustomerAccount = async (
   }
 }
 
-const fetchAllDataFromCustomer = async (customerToken: BridalLiveToken) => {
+const fetchAllDataFromCustomer = async (
+  customerToken: BridalLiveToken,
+  gownDeptId: number
+) => {
   logHeader('Fetching all customer data')
   // fetch items
-  const items = await fetchAndMapData(
-    'item',
+  const gowns = await fetchAndMapData(
+    'gown',
     customerToken,
     BridalLiveAPI.fetchAllItems,
+    {
+      status: '',
+      departmentId: gownDeptId,
+    }
+  )
+
+  // fetch attributes
+  const attributes = await fetchAndMapData(
+    'attribute',
+    customerToken,
+    BridalLiveAPI.fetchAllAttributesByItem,
     {}
   )
+
+  // fetch images
+  const itemImages = await fetchAndMapData(
+    'itemImage',
+    customerToken,
+    BridalLiveAPI.fetchAllItemImages,
+    {}
+  )
+
   // fetch contacts
   const contacts = await fetchAndMapData(
     'contact',
@@ -169,7 +161,7 @@ const fetchAllDataFromCustomer = async (customerToken: BridalLiveToken) => {
     {}
   )
   const customerData: BridalLiveCustomerData = {
-    items: items,
+    gowns: gowns,
     contacts: contacts,
     purchaseOrders: purchaseOrders,
     receivingVouchers: receivingVouchers,
@@ -177,8 +169,23 @@ const fetchAllDataFromCustomer = async (customerToken: BridalLiveToken) => {
     posTransactionItems: posTransactionItems,
     vendors: vendors,
     payments: payments,
+    attributes: attributes,
+    itemImages: itemImages,
   }
   return customerData
+}
+
+/**
+ * Removed `id` and `retailerId` from a BridalLive object in order to ensure that
+ * a customer's data is never accidentally mutated.
+ * @param data
+ */
+const _cleanBridalLiveData = (data: BaseBridalLiveObject) => {
+  return {
+    ...data,
+    id: undefined,
+    retailerId: undefined,
+  }
 }
 
 const fetchAndMapData = async (
@@ -188,22 +195,33 @@ const fetchAndMapData = async (
   fetchAllFilter: any
 ) => {
   logInfo(`Fetching all customer ${itemType}s`)
-  const items: BaseBridalLiveObject[] = await fetchAllFn(
+  const allData: BaseBridalLiveObject[] = await fetchAllFn(
     BL_PROD_ROOT_URL,
     customerToken,
     fetchAllFilter
   )
   let mapped = {}
-  if (items && items.length > 0) {
-    logInfo(`...found ${items.length} ${itemType}s`)
-    items.reduce((_mapped, item) => {
-      _mapped[item.id] = item
+  if (allData && allData.length > 0) {
+    logInfo(`...found ${allData.length} ${itemType}s`)
+    allData.reduce((_mapped, data) => {
+      _mapped[data.id] = _cleanBridalLiveData(data)
       return _mapped
     }, mapped)
   } else {
     logInfo(`...no ${itemType}s found`)
   }
   return mapped
+}
+
+const _writeDataFile = async (filename: string, data: object) => {
+  const json = JSON.stringify(data, null, 2)
+  logInfo(`Writing customer data to: ${filename}`)
+  try {
+    fs.writeFileSync(filename, json)
+    logSuccess(`...${filename} created`)
+  } catch (error) {
+    logError('Failed to write customer data file.', error)
+  }
 }
 
 export default fetchCustomerData

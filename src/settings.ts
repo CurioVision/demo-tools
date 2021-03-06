@@ -44,3 +44,12 @@ export const BL_CUSTOMER_ACCTS: BridalCustomerSettings[] = [
     gownDeptId: 25316,
   },
 ]
+
+export const CUSTOMER_DATA_DIR = './data'
+
+export const CUSTOMER_DATA_FILES = {
+  gowns: `${CUSTOMER_DATA_DIR}/gowns.json`,
+  vendors: `${CUSTOMER_DATA_DIR}/vendors.json`,
+  attributes: `${CUSTOMER_DATA_DIR}/attributes.json`,
+  itemImages: `${CUSTOMER_DATA_DIR}/itemImages.json`,
+}

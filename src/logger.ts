@@ -34,6 +34,13 @@ export const logError = (message: string, errorObject: object | null) => {
   }
 }
 
+export const logDebug = (message: string) => {
+  if (global[GLOBAL_DEBUG_KEY]) {
+    if (typeof message === 'string') console.log(info(message))
+    else console.log(info(JSON.stringify(message)))
+  }
+}
+
 export const logSevereError = (message: string, errorObject: object | null) => {
   console.log(
     `${boxen(

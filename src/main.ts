@@ -2,6 +2,7 @@ import boxen from 'boxen'
 import chalk from 'chalk'
 import clean from './actions/clean'
 import fetchCustomerData from './actions/fetchCustomerData'
+import populate from './actions/populate'
 import BridalLiveAPI from './integrations/BridalLive/api'
 import { logError } from './logger'
 import {
@@ -62,6 +63,11 @@ export const authenticateDemoAccount = async () => {
 export const cleanDemoAccount = async () => {
   await authenticateDemoAccount()
   if (demoAccountToken) await clean(demoAccountToken)
+}
+
+export const populateDemoAccount = async () => {
+  await authenticateDemoAccount()
+  if (demoAccountToken) await populate(demoAccountToken)
 }
 
 export const fetch = async () => {
