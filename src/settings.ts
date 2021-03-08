@@ -12,6 +12,8 @@ export const BL_QA_ROOT_URL = 'https://qa.bridallive.com'
 export const BL_DEMO_ACCT_RETAILER_ID = '7f4e8b14'
 export const BL_DEMO_ACCT_API_KEY = 'eeb92d140e9132f4'
 export const BL_DEMO_ACCT_GOWN_DEPT_ID = 15109
+export const BL_DEMO_ACCT_TAX_CODE_ID = 2105
+
 /**
  * The following values are checked prior to ANY BridalLive API calls that
  * mutate data. This is a protective measure to ensure that we never mutate

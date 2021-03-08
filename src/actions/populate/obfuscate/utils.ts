@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { logDebug } from '../../logger'
+import { logDebug } from '../../../logger'
 
 /**
  * Returns a random integer between min (inclusive) and max (inclusive).
@@ -37,7 +37,7 @@ const obfuscateDate = (date: Date) => {
   return offsetDate
 }
 
-export const cleanBaseBridalLiveData = (data: any) => {
+export const obfuscateBaseBridalLiveData = (data: any) => {
   // obfuscate strings
   if (data.hasOwnProperty('createdByUser')) data.createdByUser = 'BridalVision'
   if (data.hasOwnProperty('modifiedByUser'))
@@ -48,7 +48,7 @@ export const cleanBaseBridalLiveData = (data: any) => {
   // obfuscate dates
   if (data.hasOwnProperty('createdDate'))
     data.createdDate = obfuscateDate(new Date(data.createdDate)).getTime()
-  if (data.hasOwnProperty('createdDate'))
+  if (data.hasOwnProperty('modifiedDate'))
     data.modifiedDate = obfuscateDate(new Date(data.modifiedDate)).getTime()
 
   return data

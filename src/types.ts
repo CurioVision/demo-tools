@@ -72,8 +72,10 @@ export interface DemoData<T> {
 
 export interface DemoItemData extends DemoData<BridalLiveItem> {}
 export interface DemoVendorData extends DemoData<BridalLiveVendor> {}
+export interface DemoItemImagesData extends DemoData<BridalLiveItemImage> {}
 
 export interface BridalLiveDemoData {
   gowns: { [originalId: number]: DemoItemData }
   vendors: { [originalId: number]: DemoVendorData }
+  itemImages: { [originalId: number]: DemoItemImagesData }
 }

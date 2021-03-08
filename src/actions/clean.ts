@@ -59,13 +59,20 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.deleteVendor,
       { status: '', isVendorVisibleOnLookbook: '' }
     )
-    // fetch and delete contacts
+    // fetch and delete itemImages
     await fetchAllAndDelete(
-      'contact',
+      'itemImage',
       demoAccounttoken,
-      BridalLiveApi.fetchAllContacts,
-      BridalLiveApi.deleteContact
+      BridalLiveApi.fetchAllItemImages,
+      BridalLiveApi.deleteItemImage
     )
+    // fetch and delete contacts
+    // await fetchAllAndDelete(
+    //   'contact',
+    //   demoAccounttoken,
+    //   BridalLiveApi.fetchAllContacts,
+    //   BridalLiveApi.deleteContact
+    // )
   } catch (error) {
     logError('Error occurred while cleaning BridalLive demo account', error)
   }

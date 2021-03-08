@@ -3,11 +3,7 @@ import pluralize from 'pluralize'
 import BridalLiveAPI, {
   CreateFunction,
 } from '../../integrations/BridalLive/api'
-import {
-  BridalLiveItem,
-  BridalLiveToken,
-  BridalLiveVendor,
-} from '../../integrations/BridalLive/apiTypes'
+import { BridalLiveToken } from '../../integrations/BridalLive/apiTypes'
 import { logError, logHeader, logInfo, logSuccess } from '../../logger'
 import {
   BL_DEMO_ACCT_GOWN_DEPT_ID,
@@ -15,9 +11,14 @@ import {
   CUSTOMER_DATA_FILES,
 } from '../../settings'
 import { BridalLiveDemoData } from '../../types'
-import { cleanBaseBridalLiveData } from './utils'
+import obfuscateGown from './obfuscate/gown'
+import obfuscateItemImage from './obfuscate/itemImage'
+import obfuscateVendor from './obfuscate/vendor'
 
-type CleanFunction = typeof cleanGown | typeof cleanVendor
+type ObfuscateFunction =
+  | typeof obfuscateGown
+  | typeof obfuscateVendor
+  | typeof obfuscateItemImage
 
 const populateDemoAccount = async (demoAccounttoken: BridalLiveToken) => {
   logHeader(`Populating BridalLive Demo account`)
@@ -32,14 +33,14 @@ const importCustomerData = async (
   demoAccountToken: BridalLiveToken,
   demoGownDeptId: number
 ) => {
-  let demoData: BridalLiveDemoData = { gowns: {}, vendors: {} }
+  let demoData: BridalLiveDemoData = { gowns: {}, vendors: {}, itemImages: {} }
   // import vendors
   demoData = await importData(
     demoAccountToken,
     demoData,
     'vendors',
     CUSTOMER_DATA_FILES.vendors,
-    cleanVendor,
+    obfuscateVendor,
     BridalLiveAPI.createVendor
   )
   // import gowns
@@ -48,8 +49,17 @@ const importCustomerData = async (
     demoData,
     'gowns',
     CUSTOMER_DATA_FILES.gowns,
-    cleanGown,
+    obfuscateGown,
     BridalLiveAPI.createItem
+  )
+  // import item images
+  demoData = await importData(
+    demoAccountToken,
+    demoData,
+    'itemImages',
+    CUSTOMER_DATA_FILES.itemImages,
+    obfuscateItemImage,
+    BridalLiveAPI.createItemImage
   )
   // demoData = await importVendors(demoAccountToken, demoData)
   // demoData = await importGowns(demoAccountToken, demoData)
@@ -60,7 +70,7 @@ const importData = async (
   demoData: BridalLiveDemoData,
   type: keyof BridalLiveDemoData,
   dataFilename: string,
-  cleanDataFn: CleanFunction,
+  obfuscateFn: ObfuscateFunction,
   createFn: CreateFunction
 ) => {
   const mappedCustomerData = await _readCustomerDataFile(dataFilename)
@@ -70,50 +80,42 @@ const importData = async (
   let slicedIds = type === 'gowns' ? originalIds.slice(0, 10) : originalIds
   for (const id of slicedIds) {
     let data = mappedCustomerData[id]
-    logInfo(`Preparing to import ${pluralize.singular(type)} : ${data.name}`)
+    logInfo(
+      `Preparing to import ${pluralize.singular(type)} : ${
+        data.hasOwnProperty('name') ? data.name : data.id
+      }`
+    )
 
-    data = cleanDataFn(demoData, data)
-    const createdData = await createFn(BL_QA_ROOT_URL, demoAccountToken, data)
-    if (createdData) {
-      logSuccess(
-        `...created ${type}: \n\tID = ${createdData.id}, \n\tNAME = ${createdData.name}`
-      )
-      const data = {
-        newId: createdData.id,
-        cleanData: createdData,
+    data = obfuscateFn(demoData, data)
+    if (data) {
+      try {
+        const createdData = await createFn(
+          BL_QA_ROOT_URL,
+          demoAccountToken,
+          data
+        )
+        if (createdData) {
+          logSuccess(
+            `...created ${type}: \n\tID = ${createdData.id}, \n\tNAME = ${
+              createdData.hasOwnProperty('name')
+                ? createdData['name']
+                : 'Data type has no name'
+            }`
+          )
+          const data = {
+            newId: createdData.id,
+            cleanData: createdData,
+          }
+          demoData[type][id] = data
+        }
+      } catch (error) {
+        logError('Error while creating demo date', error)
       }
-      demoData[type][id] = data
+    } else {
+      logInfo(`...skipped import of ${type}`)
     }
   }
   return demoData
-}
-
-const cleanGown = (demoData: BridalLiveDemoData, gown: BridalLiveItem) => {
-  // replace any identifying values
-  logInfo(`...obfuscating data`)
-  gown = cleanBaseBridalLiveData(gown)
-
-  // make sure gowns use the gown department id from our demo account
-  logInfo(`...setting Gown Dept ID to ${BL_DEMO_ACCT_GOWN_DEPT_ID}`)
-  gown.departmentId = BL_DEMO_ACCT_GOWN_DEPT_ID
-
-  // set new vendor id
-  gown.vendorId = demoData.vendors[gown.vendorId].newId
-
-  // unlink from marketplace
-  gown.marketplaceId = undefined
-
-  return gown
-}
-
-const cleanVendor = (
-  demoData: BridalLiveDemoData,
-  vendor: BridalLiveVendor
-) => {
-  // replace any identifying values
-  logInfo(`...obfuscating data`)
-  vendor = cleanBaseBridalLiveData(vendor)
-  return vendor
 }
 
 const _readCustomerDataFile = async (filename: string) => {
