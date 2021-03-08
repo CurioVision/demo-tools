@@ -1,35 +1,36 @@
-import { BridalLiveItemImage } from '../../../integrations/BridalLive/apiTypes'
+import { LookbookAttribute } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
 import { BridalLiveDemoData } from '../../../types'
-import { obfuscateBaseBridalLiveData } from './utils'
+import {
+  itemIdInDemoData,
+  itemWasAddedToDemoData,
+  obfuscateBaseBridalLiveData,
+} from './utils'
 
 const StaticValues = {}
 
-const obfuscateItemImage = (
+const obfuscateItemAttribute = (
   demoData: BridalLiveDemoData,
-  itemImage: BridalLiveItemImage
+  itemAttribute: LookbookAttribute
 ) => {
-  // if the corresponding item isn't in demoData, return null so this itemImage
+  // if the corresponding item isn't in demoData, return null so this itemAttribute
   // doesn't get imported
-  if (
-    !demoData.gowns.hasOwnProperty(itemImage.inventoryItemId) ||
-    !demoData.gowns[itemImage.inventoryItemId].newId
-  ) {
+  if (!itemWasAddedToDemoData(demoData, itemAttribute.itemId)) {
     logInfo(`...no corresponding Item was created in demo data`)
     return null
   }
 
   // replace any identifying values
-  logInfo(`...obfuscating itemImage data`)
-  itemImage = obfuscateBaseBridalLiveData(itemImage)
+  logInfo(`...obfuscating itemAttribute data`)
+  itemAttribute = obfuscateBaseBridalLiveData(itemAttribute)
 
   // set new item id
-  itemImage.inventoryItemId = demoData.gowns[itemImage.inventoryItemId].newId
+  itemAttribute.itemId = itemIdInDemoData(demoData, itemAttribute.itemId)
 
   return {
-    ...itemImage,
+    ...itemAttribute,
     ...StaticValues,
   }
 }
 
-export default obfuscateItemImage
+export default obfuscateItemAttribute

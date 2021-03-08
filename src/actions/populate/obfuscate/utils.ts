@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { logDebug } from '../../../logger'
+import { BridalLiveDemoData } from '../../../types'
 
 /**
  * Returns a random integer between min (inclusive) and max (inclusive).
@@ -53,3 +54,13 @@ export const obfuscateBaseBridalLiveData = (data: any) => {
 
   return data
 }
+
+export const itemWasAddedToDemoData = (
+  demoData: BridalLiveDemoData,
+  itemId: string | number
+) => demoData.gowns.hasOwnProperty(itemId) && demoData.gowns[itemId].newId
+
+export const itemIdInDemoData = (
+  demoData: BridalLiveDemoData,
+  customerItemId: string | number
+) => demoData.gowns[customerItemId].newId

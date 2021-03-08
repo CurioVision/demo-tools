@@ -12,6 +12,7 @@ import {
 } from '../../settings'
 import { BridalLiveDemoData } from '../../types'
 import obfuscateGown from './obfuscate/gown'
+import obfuscateItemAttribute from './obfuscate/itemAttribute'
 import obfuscateItemImage from './obfuscate/itemImage'
 import obfuscateVendor from './obfuscate/vendor'
 
@@ -19,6 +20,7 @@ type ObfuscateFunction =
   | typeof obfuscateGown
   | typeof obfuscateVendor
   | typeof obfuscateItemImage
+  | typeof obfuscateItemAttribute
 
 const populateDemoAccount = async (demoAccounttoken: BridalLiveToken) => {
   logHeader(`Populating BridalLive Demo account`)
@@ -33,7 +35,12 @@ const importCustomerData = async (
   demoAccountToken: BridalLiveToken,
   demoGownDeptId: number
 ) => {
-  let demoData: BridalLiveDemoData = { gowns: {}, vendors: {}, itemImages: {} }
+  let demoData: BridalLiveDemoData = {
+    gowns: {},
+    vendors: {},
+    itemImages: {},
+    attributes: {},
+  }
   // import vendors
   demoData = await importData(
     demoAccountToken,
@@ -61,8 +68,15 @@ const importCustomerData = async (
     obfuscateItemImage,
     BridalLiveAPI.createItemImage
   )
-  // demoData = await importVendors(demoAccountToken, demoData)
-  // demoData = await importGowns(demoAccountToken, demoData)
+  // import item attributes
+  demoData = await importData(
+    demoAccountToken,
+    demoData,
+    'attributes',
+    CUSTOMER_DATA_FILES.attributes,
+    obfuscateItemAttribute,
+    BridalLiveAPI.createAttribute
+  )
 }
 
 const importData = async (
@@ -82,7 +96,7 @@ const importData = async (
     let data = mappedCustomerData[id]
     logInfo(
       `Preparing to import ${pluralize.singular(type)} : ${
-        data.hasOwnProperty('name') ? data.name : data.id
+        data.hasOwnProperty('name') && data.name ? data.name : data.id
       }`
     )
 
@@ -96,7 +110,9 @@ const importData = async (
         )
         if (createdData) {
           logSuccess(
-            `...created ${type}: \n\tID = ${createdData.id}, \n\tNAME = ${
+            `...created ${pluralize.singular(type)}: \n\tID = ${
+              createdData.id
+            }, \n\tNAME = ${
               createdData.hasOwnProperty('name')
                 ? createdData['name']
                 : 'Data type has no name'
@@ -112,7 +128,7 @@ const importData = async (
         logError('Error while creating demo date', error)
       }
     } else {
-      logInfo(`...skipped import of ${type}`)
+      logInfo(`...skipped import of ${pluralize.singular(type)}`)
     }
   }
   return demoData

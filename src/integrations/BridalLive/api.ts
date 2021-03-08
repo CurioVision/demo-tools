@@ -55,14 +55,13 @@ export type DeleteFunction =
   | typeof deleteItemImage
 
 export type CreateFunction =
-  // | typeof createContact
   | typeof createItem
-  // | typeof createPayment
   // | typeof createPosTransaction
   // | typeof createPurchaseOrder
   // | typeof createReceivingVoucher
   | typeof createVendor
   | typeof createItemImage
+  | typeof createAttribute
 
 type BL_ROOT_URL = typeof BL_QA_ROOT_URL | typeof BL_PROD_ROOT_URL
 
@@ -125,6 +124,7 @@ const ITEM_ENDPOINTS = {
 const ITEM_ATTRIBUTE_ENDPOINTS = {
   allItemAttributes: '/bl-server/api/itemItemAttributes/list',
   updateItemAttributes: '/bl-server/api/itemItemAttributes',
+  createItemAttributes: '/bl-server/api/itemItemAttributes',
   deleteItemAttributes: '/bl-server/api/itemItemAttributes',
 }
 
@@ -1055,10 +1055,22 @@ const fetchAllAttributesByItem = (
 ) => {
   return fetchAllData<LookbookAttribute, ItemDetailsForLookbookCriteria>(
     rootUrl,
-    // ITEM_ENDPOINTS.allAttributes,
     ITEM_ATTRIBUTE_ENDPOINTS.allItemAttributes,
     token,
     filterCriteria
+  )
+}
+
+const createAttribute = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  itemAttribute: LookbookAttribute
+): Promise<LookbookAttribute> => {
+  return createData<LookbookAttribute>(
+    rootUrl,
+    ITEM_ATTRIBUTE_ENDPOINTS.createItemAttributes,
+    token,
+    itemAttribute
   )
 }
 
@@ -1204,4 +1216,5 @@ export default {
   createItemImage,
   deleteItemImage,
   fetchAllAttributesByItem,
+  createAttribute,
 }

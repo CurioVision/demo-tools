@@ -1,7 +1,11 @@
 import { BridalLiveItemImage } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
 import { BridalLiveDemoData } from '../../../types'
-import { obfuscateBaseBridalLiveData } from './utils'
+import {
+  itemIdInDemoData,
+  itemWasAddedToDemoData,
+  obfuscateBaseBridalLiveData,
+} from './utils'
 
 const StaticValues = {}
 
@@ -11,10 +15,7 @@ const obfuscateItemImage = (
 ) => {
   // if the corresponding item isn't in demoData, return null so this itemImage
   // doesn't get imported
-  if (
-    !demoData.gowns.hasOwnProperty(itemImage.inventoryItemId) ||
-    !demoData.gowns[itemImage.inventoryItemId].newId
-  ) {
+  if (!itemWasAddedToDemoData(demoData, itemImage.inventoryItemId)) {
     logInfo(`...no corresponding Item was created in demo data`)
     return null
   }
@@ -24,7 +25,10 @@ const obfuscateItemImage = (
   itemImage = obfuscateBaseBridalLiveData(itemImage)
 
   // set new item id
-  itemImage.inventoryItemId = demoData.gowns[itemImage.inventoryItemId].newId
+  itemImage.inventoryItemId = itemIdInDemoData(
+    demoData,
+    itemImage.inventoryItemId
+  )
 
   return {
     ...itemImage,
