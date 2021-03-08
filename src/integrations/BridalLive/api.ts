@@ -340,7 +340,10 @@ const fetchAllData = async <T, F>(
   })
     .then((res) => res.json())
     .then((data) => {
-      if (data.result) return data.result as T[]
+      if (data.errors && data.errors.length > 0) {
+        throw data
+      } else if (data.result) return data.result as T[]
+      else return data as T[]
     })
     .catch(() => {
       throw new Error(`Failed to fetch all. Endpoint: ${endPoint}`)
@@ -1052,7 +1055,8 @@ const fetchAllAttributesByItem = (
 ) => {
   return fetchAllData<LookbookAttribute, ItemDetailsForLookbookCriteria>(
     rootUrl,
-    ITEM_ENDPOINTS.allAttributes,
+    // ITEM_ENDPOINTS.allAttributes,
+    ITEM_ATTRIBUTE_ENDPOINTS.allItemAttributes,
     token,
     filterCriteria
   )
