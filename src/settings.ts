@@ -50,8 +50,12 @@ export const BL_CUSTOMER_ACCTS: BridalCustomerSettings[] = [
 export const CUSTOMER_DATA_DIR = './data'
 
 export const CUSTOMER_DATA_FILES = {
-  gowns: `${CUSTOMER_DATA_DIR}/gowns.json`,
   vendors: `${CUSTOMER_DATA_DIR}/vendors.json`,
-  attributes: `${CUSTOMER_DATA_DIR}/attributes.json`,
+  gowns: `${CUSTOMER_DATA_DIR}/gowns.json`,
   itemImages: `${CUSTOMER_DATA_DIR}/itemImages.json`,
+  attributes: `${CUSTOMER_DATA_DIR}/attributes.json`,
+  purchaseOrders: `${CUSTOMER_DATA_DIR}/purchaseOrders.json`,
+  receivingVouchers: `${CUSTOMER_DATA_DIR}/receivingVouchers.json`,
+  posTransactions: `${CUSTOMER_DATA_DIR}/posTransactions.json`,
+  posTransactionItems: `${CUSTOMER_DATA_DIR}/posTransactionItems.json`,
 }

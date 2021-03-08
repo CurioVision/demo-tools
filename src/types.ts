@@ -44,15 +44,15 @@ export interface MappedBridalLiveItemImages {
 
 export interface BridalLiveCustomerData {
   gowns: MappedBridalLiveItems
-  contacts: MappedBridalLiveContacts
   purchaseOrders: MappedBridalLivePurchaseOrders
   receivingVouchers: MappedBridalLiveReceivingVouchers
   posTransactions: MappedBridalLivePosTransactions
   posTransactionItems: MappedBridalLivePosTransactionLineItems
   vendors: MappedBridalLiveVendors
-  payments: MappedBridalLivePayments
   attributes: MappedBridalLiveAttributes
   itemImages: MappedBridalLiveItemImages
+  // contacts: MappedBridalLiveContacts
+  // payments: MappedBridalLivePayments
 }
 
 export type TrackedBridalLiveTypes =
