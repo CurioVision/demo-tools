@@ -6,7 +6,9 @@ import {
   BridalLivePosTransaction,
   BridalLivePosTransactionLineItem,
   BridalLivePurchaseOrder,
+  BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucher,
+  BridalLiveReceivingVoucherItem,
   BridalLiveVendor,
   LookbookAttribute,
 } from './integrations/BridalLive/apiTypes'
@@ -20,8 +22,14 @@ export interface MappedBridalLiveContacts {
 export interface MappedBridalLivePurchaseOrders {
   [id: number]: BridalLivePurchaseOrder
 }
+export interface MappedBridalLivePurchaseOrderItems {
+  [id: number]: BridalLivePurchaseOrderItem
+}
 export interface MappedBridalLiveReceivingVouchers {
   [id: number]: BridalLiveReceivingVoucher
+}
+export interface MappedBridalLiveReceivingVoucherItems {
+  [id: number]: BridalLiveReceivingVoucherItem
 }
 export interface MappedBridalLivePosTransactions {
   [id: number]: BridalLivePosTransaction
@@ -45,7 +53,9 @@ export interface MappedBridalLiveItemImages {
 export interface BridalLiveCustomerData {
   gowns: MappedBridalLiveItems
   purchaseOrders: MappedBridalLivePurchaseOrders
+  purchaseOrderItems: MappedBridalLivePurchaseOrderItems
   receivingVouchers: MappedBridalLiveReceivingVouchers
+  receivingVoucherItems: MappedBridalLiveReceivingVoucherItems
   posTransactions: MappedBridalLivePosTransactions
   posTransactionItems: MappedBridalLivePosTransactionLineItems
   vendors: MappedBridalLiveVendors
@@ -59,6 +69,7 @@ export type TrackedBridalLiveTypes =
   | BridalLiveItem
   | BridalLiveContact
   | BridalLivePurchaseOrder
+  | BridalLivePurchaseOrderItem
   | BridalLiveReceivingVoucher
   | BridalLivePosTransaction
   | BridalLivePosTransactionLineItem
@@ -74,10 +85,16 @@ export interface DemoItemData extends DemoData<BridalLiveItem> {}
 export interface DemoVendorData extends DemoData<BridalLiveVendor> {}
 export interface DemoItemImagesData extends DemoData<BridalLiveItemImage> {}
 export interface DemoAttributesData extends DemoData<LookbookAttribute> {}
+export interface DemoPurchaseOrdersData
+  extends DemoData<BridalLivePurchaseOrder> {}
+export interface DemoPurchaseOrderItemsData
+  extends DemoData<BridalLivePurchaseOrderItem> {}
 
 export interface BridalLiveDemoData {
   gowns: { [originalId: number]: DemoItemData }
   vendors: { [originalId: number]: DemoVendorData }
   itemImages: { [originalId: number]: DemoItemImagesData }
   attributes: { [originalId: number]: DemoAttributesData }
+  purchaseOrders: { [originalId: number]: DemoPurchaseOrdersData }
+  purchaseOrderItems: { [originalId: number]: DemoPurchaseOrderItemsData }
 }

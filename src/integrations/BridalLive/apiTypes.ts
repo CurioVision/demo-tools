@@ -33,9 +33,9 @@ export interface BridalLiveCompany extends BaseBridalLiveObject {
   createdByUser: string // ""
   modifiedDate: null
   modifiedByUser: null
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   licenseId: number // 3443
   locale: string // "US"
   name: string // "Butterfly Revolution"
@@ -111,9 +111,9 @@ export interface BridalLiveDepartment extends BaseBridalLiveObject {
   createdByUser: string // '',
   modifiedDate: number // 1556745360000,
   modifiedByUser: string // 'butterfly',
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   name: string // 'Bridal Gowns - SO',
   code: string // 'BG',
   marginPercent: null
@@ -137,9 +137,9 @@ export interface BridalLiveEmployee extends BaseBridalLiveObject {
   createdByUser: string // "",
   modifiedDate: null
   modifiedByUser: null
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   firstName: string // "Amanda",
   lastName: string // "Kruskenisky",
   emailAddress: null
@@ -200,9 +200,9 @@ export interface BridalLiveItem extends BaseBridalLiveObject {
   createdByUser: string // "Shannon",
   modifiedDate: number // 1553784630000,
   modifiedByUser: string // "Emmy",
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   departmentId: number // 793,
   vendorId: number // 45385,
   itemNumber: number // 1320,
@@ -229,7 +229,7 @@ export interface BridalLiveItem extends BaseBridalLiveObject {
   discontinuedDate: null
   status: string // "A",
   qbSyncStatus: null
-  qbListId: null
+  qbListId: string | null
   qbEditSequence: null
   inventoryItem: boolean // true,
   nonInventoryItem: boolean // false,
@@ -238,7 +238,7 @@ export interface BridalLiveItem extends BaseBridalLiveObject {
   promptToRegister: null
   doNotAllowDiscounts: null
   sample: boolean // true,
-  marketplaceId: null
+  marketplaceId: number | null
   smartMatchIgnored: boolean // false,
   minedItemsIgnored: boolean // false,
   showOnLookbook: boolean // true,
@@ -344,9 +344,9 @@ export interface BridalLiveContact extends BaseBridalLiveObject {
   createdByUser: string //'butterfly';
   modifiedDate: number // 1570205417000;
   modifiedByUser: string //'butterfly';
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   typeId: number //1;
   firstName: string //'Matt';
   lastName: string //'Gabor';
@@ -366,7 +366,7 @@ export interface BridalLiveContact extends BaseBridalLiveObject {
   smsOptIn: false
   status: string //'A';
   qbSyncStatus: null
-  qbListId: null
+  qbListId: string | null
   qbEditSequence: null
   paymentProfileToken: null
   paymentProfileTokenProvider: null
@@ -437,9 +437,9 @@ export interface BridalLivePosTransactionLineItem extends BaseBridalLiveObject {
   createdByUser: string //butterfly';
   modifiedDate: number //1609341750000;
   modifiedByUser: string //butterfly';
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   transactionId: number //5632736;
   sequenceNumber: number //0;
   inventoryItemId: number //4058720;
@@ -531,9 +531,9 @@ export interface BridalLivePosTransaction extends BaseBridalLiveObject {
   createdByUser: string //butterfly';
   modifiedDate: number //1609341804000;
   modifiedByUser: string //butterfly';
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   contactId: number //6162109;
   eventId: null
   employeeId: number //27936;
@@ -629,9 +629,9 @@ export interface BridalLivePurchaseOrder extends BaseBridalLiveObject {
   createdByUser: string // 'Emmy'
   modifiedDate: number // 1401998960000
   modifiedByUser: string // 'Emmy'
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   purchaseOrderNumber: number // 118
   vendorId: number // 199
   vendorName: string // 'J Picone'
@@ -639,7 +639,7 @@ export interface BridalLivePurchaseOrder extends BaseBridalLiveObject {
   employeeName: string // 'Emmy Gorman'
   orderDate: string // '2014-06-05'
   shipDate: string // '2014-06-10'
-  cancelDate: null
+  cancelDate: null | string
   confirmationNumber: string // 'email'
   submittedDate: string // '2014-06-05'
   notes: string // 'Thanks ladies!'
@@ -673,9 +673,9 @@ export interface BridalLivePurchaseOrderItem extends BaseBridalLiveObject {
   createdByUser: string // 'Emmy'
   modifiedDate: number // 1404415370000
   modifiedByUser: string // 'Emmy'
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   purchaseOrderId: number // 503
   sequenceNumber: number // 0
   inventoryItemId: number // 2647
@@ -730,9 +730,9 @@ export interface BridalLiveReceivingVoucherItem extends BaseBridalLiveObject {
   createdByUser: string // 'Emmy'
   modifiedDate: number // 1402596501000
   modifiedByUser: string // 'Emmy'
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   receivingVoucherId: number //  598
   purchaseOrderId: number // 520
   purchaseOrderItemId: number // 1390
@@ -770,9 +770,9 @@ export interface BridalLiveReceivingVoucher extends BaseBridalLiveObject {
   createdByUser: string // "Emmy",
   modifiedDate: number // 1402596501000,
   modifiedByUser: string // "Emmy",
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   receivingVoucherNumber: number // 100,
   vendorId: number // 199,
   vendorName: string // "J Picone",
@@ -838,7 +838,7 @@ export interface BridalLivePayment extends BaseBridalLiveObject {
   methodId: number
   modifiedByUser: string
   modifiedDate: string
-  modifiedDateAfter: string
+  modifiedDateAfter: string | null
   originalPaymentId: number
   partialApproval: boolean
   paymentMethod: any
@@ -855,7 +855,7 @@ export interface BridalLivePayment extends BaseBridalLiveObject {
   receiptHTML: string
   receiptNumber: number
   registerId: number
-  retailerIds: any[]
+  retailerIds: string | null | any[]
   sequenceNumber: number
   signature: any
   signatureImageURL: string
@@ -897,15 +897,15 @@ export interface BridalLiveVendor extends BaseBridalLiveObject {
   faxNumber: string
   imageUrl: string
   isVendorVisibleOnLookbook: string
-  marketplaceId: number
+  marketplaceId: number | null
   modifiedByUser: string
   modifiedDate: string
-  modifiedDateAfter: string
+  modifiedDateAfter: string | null
   name: string
   notes: string
   phoneNumber: string
-  qbListId: string
-  retailerIds: any[]
+  qbListId: string | null
+  retailerIds: any[] | string | null
   retailerName: string
   sizeGroups: any[]
   smartMatchIgnored: boolean
@@ -928,7 +928,7 @@ export interface LookbookAttribute extends BaseBridalLiveObject {
   modifiedDate: string | null // null
   modifiedByUser: string | null // null
   modifiedDateAfter: string | null // null
-  retailerIds: string | null // null
+  retailerIds: any[] | string | null // null
   tokenRetailerId: string | null // null
   itemId: number // 2525
   attributeId: number // 37
@@ -941,9 +941,9 @@ export interface BridalLiveItemImage extends BaseBridalLiveObject {
   createdByUser: string // 'Shannon'
   modifiedDate: number // 1409864156000
   modifiedByUser: string // 'Shannon'
-  modifiedDateAfter: null
-  retailerIds: null
-  tokenRetailerId: null
+  modifiedDateAfter: string | null
+  retailerIds: any[] | string | null
+  tokenRetailerId: string | null
   inventoryItemId: number // 23197
   sequence: number // 0
   imageUrl: string // 'https://bl-online-item-pictures.s3.amazonaws.com/uploads%2F1409864153912-2166_Front.jpg'

@@ -34,8 +34,16 @@ const fetchCustomerData = async () => {
         customerData.purchaseOrders
       )
       _writeDataFile(
+        CUSTOMER_DATA_FILES.purchaseOrderItems,
+        customerData.purchaseOrderItems
+      )
+      _writeDataFile(
         CUSTOMER_DATA_FILES.receivingVouchers,
         customerData.receivingVouchers
+      )
+      _writeDataFile(
+        CUSTOMER_DATA_FILES.receivingVoucherItems,
+        customerData.receivingVoucherItems
       )
       _writeDataFile(
         CUSTOMER_DATA_FILES.posTransactions,
@@ -103,7 +111,6 @@ const fetchAllDataFromCustomer = async (
     BridalLiveAPI.fetchAllVendors,
     { status: '' }
   )
-
   // fetch items
   const gowns = await fetchAndMapData(
     'gown',
@@ -114,7 +121,6 @@ const fetchAllDataFromCustomer = async (
       departmentId: gownDeptId,
     }
   )
-
   // fetch attributes
   const attributes = await fetchAndMapData(
     'attribute',
@@ -124,7 +130,6 @@ const fetchAllDataFromCustomer = async (
       itemId: '',
     }
   )
-
   // fetch images
   const itemImages = await fetchAndMapData(
     'itemImage',
@@ -139,12 +144,26 @@ const fetchAllDataFromCustomer = async (
     BridalLiveAPI.fetchAllPurchaseOrders,
     { orderType: '', status: '' }
   )
+  // fetch purchaseOrderItems
+  const purchaseOrderItems = await fetchAndMapData(
+    'purchaseOrderItem',
+    customerToken,
+    BridalLiveAPI.fetchAllPurchaseOrderItems,
+    {}
+  )
   // fetch receivingVouchers
   const receivingVouchers = await fetchAndMapData(
     'receivingVoucher',
     customerToken,
     BridalLiveAPI.fetchAllReceivingVouchers,
     { status: '' }
+  )
+  // fetch receivingVoucherItems
+  const receivingVoucherItems = await fetchAndMapData(
+    'receivingVoucherItem',
+    customerToken,
+    BridalLiveAPI.fetchAllReceivingVoucherItems,
+    {}
   )
   // fetch posTransactions
   const posTransactions = await fetchAndMapData(
@@ -156,7 +175,7 @@ const fetchAllDataFromCustomer = async (
       typeId: -1,
     }
   )
-  // fetch posTransactions
+  // fetch posTransactionItems
   const posTransactionItems = await fetchAndMapData(
     'posTransactionItem',
     customerToken,
@@ -183,7 +202,9 @@ const fetchAllDataFromCustomer = async (
     itemImages: itemImages,
     attributes: attributes,
     purchaseOrders: purchaseOrders,
+    purchaseOrderItems: purchaseOrderItems,
     receivingVouchers: receivingVouchers,
+    receivingVoucherItems: receivingVoucherItems,
     posTransactions: posTransactions,
     posTransactionItems: posTransactionItems,
     // contacts: contacts,

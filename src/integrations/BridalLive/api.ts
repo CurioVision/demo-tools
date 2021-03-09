@@ -22,6 +22,7 @@ import {
   BridalLivePurchaseOrder,
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucher,
+  BridalLiveReceivingVoucherItem,
   BridalLiveToken,
   BridalLiveVendor,
   FullBridalLiveItem,
@@ -31,42 +32,26 @@ import {
   LookbookAttribute,
 } from './apiTypes'
 
-export type FetchAllFunction =
-  | typeof fetchAllContacts
-  | typeof fetchAllItems
-  | typeof fetchAllPayments
-  | typeof fetchAllPosTransactionItems
-  | typeof fetchAllPosTransactions
-  | typeof fetchAllPurchaseOrders
-  | typeof fetchAllReceivingVouchers
-  | typeof fetchAllTransactionItemJournals
-  | typeof fetchAllVendors
-  | typeof fetchAllAttributesByItem
-  | typeof fetchAllItemImages
+export type FetchAllFunction = (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: {}
+) => Promise<BaseBridalLiveObject[]>
 
-export type DeleteFunction =
-  | typeof deleteContact
-  | typeof deleteItem
-  | typeof deletePayment
-  | typeof deletePosTransaction
-  | typeof deletePurchaseOrder
-  | typeof deleteReceivingVoucher
-  | typeof deleteVendor
-  | typeof deleteItemImage
+export type DeleteFunction = (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  id: string | number
+) => Promise<any>
 
-export type CreateFunction =
-  | typeof createItem
-  // | typeof createPosTransaction
-  // | typeof createPurchaseOrder
-  // | typeof createReceivingVoucher
-  | typeof createVendor
-  | typeof createItemImage
-  | typeof createAttribute
+export type CreateFunction = (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  item: BaseBridalLiveObject
+) => Promise<BaseBridalLiveObject>
 
 type BL_ROOT_URL = typeof BL_QA_ROOT_URL | typeof BL_PROD_ROOT_URL
 
-// const ROOT_URL = 'https://app.bridallive.com'
-// const QA_ROOT_URL = 'https://qa.bridallive.com'
 const LOGIN_ENDPOINT = '/bl-server/api/auth/apiLogin'
 
 /**
@@ -148,14 +133,16 @@ const ITEM_PICTURE_ENDPOINTS = {
 //   receivingReport: '/bl-server/api/reports/purchasingReports/receivingReport'
 // }
 
-// /**
-//  * BridalLive `purchase-order-item-controller`:
-//  *
-//  * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-item-controller
-//  */
-// const PURCHASE_ORDER_ITEMS_ENDPOINTS = {
-//   allPurchaseOrderItems: '/bl-server/api/purchaseOrderItems/list'
-// }
+/**
+ * BridalLive `purchase-order-item-controller`:
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-item-controller
+ */
+const PURCHASE_ORDER_ITEMS_ENDPOINTS = {
+  allPurchaseOrderItems: '/bl-server/api/purchaseOrderItems/list',
+  createPurchaseOrderItem: '/bl-server/api/purchaseOrderItems',
+  deletePurchaseOrderItem: '/bl-server/api/purchaseOrderItems',
+}
 
 /**
  * BridalLive `purchase-order-controller`:
@@ -165,6 +152,7 @@ const ITEM_PICTURE_ENDPOINTS = {
 const PURCHASE_ORDERS_ENDPOINTS = {
   allPurchaseOrders: '/bl-server/api/purchaseOrders/list?page=0',
   createPurchaseOrderForItem: '/bl-server/api/purchaseOrders/createPOForItems',
+  createPurchaseOrder: `/bl-server/api/purchaseOrders`,
   updatePurchaseOrder: `/bl-server/api/purchaseOrders`,
   deletePurchaseOrder: '/bl-server/api/purchaseOrders',
 }
@@ -188,7 +176,19 @@ const RECEIVING_VOUCHERS_ENDPOINTS = {
   createReceivingVoucherForPOItems:
     '/bl-server/api/receivingVouchers/createForPOItems',
   updateReceivingVoucher: '/bl-server/api/receivingVouchers',
+  createReceivingVoucher: '/bl-server/api/receivingVouchers',
   deleteReceivingVoucher: '/bl-server/api/receivingVouchers',
+}
+
+/**
+ * BridalLive `receiving-voucher-item-controller`:
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/receiving-voucher-item-controller
+ */
+const RECEIVING_VOUCHER_ITEMS_ENDPOINTS = {
+  allReceivingVoucherItems: '/bl-server/api/receivingVoucherItems/list?page=0',
+  createReceivingVoucherItem: '/bl-server/api/receivingVoucherItems',
+  deleteReceivingVoucherItem: '/bl-server/api/receivingVoucherItems',
 }
 
 /**
@@ -199,6 +199,7 @@ const RECEIVING_VOUCHERS_ENDPOINTS = {
 const POS_TRANSACTIONS_ENDPOINTS = {
   allPosTransactions: '/bl-server/api/posTransactions/list?page=0',
   deletePosTransaction: '/bl-server/api/posTransactions',
+  createPosTransaction: '/bl-server/api/posTransactions',
 }
 
 /**
@@ -208,7 +209,8 @@ const POS_TRANSACTIONS_ENDPOINTS = {
  */
 const POS_TRANSACTION_ITEMS_ENDPOINTS = {
   allPosTransactionItems: '/bl-server/api/posTransactionItems/list?page=0',
-  // deletePosTransactionLineItem: '/bl-server/api/posTransactionItems',
+  deletePosTransactionItem: '/bl-server/api/posTransactionItems',
+  createPosTransactionItem: '/bl-server/api/posTransactionItems',
 }
 
 /**
@@ -424,6 +426,9 @@ const createData = async <T>(
   token: BridalLiveToken,
   data: T
 ): Promise<T> => {
+  if (endPoint === PURCHASE_ORDER_ITEMS_ENDPOINTS.createPurchaseOrderItem) {
+    console.log('In Create Data for PO Item')
+  }
   if (!token || token === '') {
     logError(
       `Cannot create data without a valid token. Endpoint: ${endPoint}`,
@@ -447,6 +452,10 @@ const createData = async <T>(
   })
     .then((res) => res.json())
     .then((data) => {
+      if (endPoint === PURCHASE_ORDER_ITEMS_ENDPOINTS.createPurchaseOrderItem) {
+        console.log('received data:')
+        console.log(data)
+      }
       if (data.errors && data.errors.length > 0) {
         throw data
       } else {
@@ -631,6 +640,19 @@ const deletePurchaseOrder = async (
   )
 }
 
+const createPurchaseOrder = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  purchaseOrder: BridalLivePurchaseOrder
+): Promise<BridalLivePurchaseOrder> => {
+  return createData<BridalLivePurchaseOrder>(
+    rootUrl,
+    PURCHASE_ORDERS_ENDPOINTS.createPurchaseOrder,
+    token,
+    purchaseOrder
+  )
+}
+
 const createPurchaseOrderForItems = async (
   rootUrl: BL_ROOT_URL,
   token: BridalLiveToken,
@@ -678,6 +700,58 @@ const updatePurchaseOrder = async (
     PURCHASE_ORDERS_ENDPOINTS.updatePurchaseOrder,
     token,
     purchaseOrder
+  )
+}
+/**
+ * Fetch BridalLive purchaseOrderItemss. Uses the purchaseOrderItemss/list endpoint and returns the result.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-item-controller/listUsingPOST_52
+ * @param token BridalLive token used to authenticate the request
+ * @param filterCriteria POST request body
+ */
+const fetchAllPurchaseOrderItems = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: ItemListCriteria
+): Promise<BridalLivePurchaseOrderItem[]> => {
+  return fetchAllData<BridalLivePurchaseOrderItem, ItemListCriteria>(
+    rootUrl,
+    PURCHASE_ORDER_ITEMS_ENDPOINTS.allPurchaseOrderItems,
+    token,
+    filterCriteria
+  )
+}
+
+/**
+ * Detele BridalLive purchaseOrderItem by id. Uses the purchaseOrderItems/{id} endpoint.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchaseOrderItem-controller/deleteUsingDELETE_32
+ * @param token BridalLive token used to authenticate the request
+ * @param purchaseOrderItemId ID of the purchaseOrderItem to fetch
+ */
+const deletePurchaseOrderItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  purchaseOrderItemId: string | number
+): Promise<BridalLivePurchaseOrderItem> => {
+  return deleteData<BridalLivePurchaseOrderItem>(
+    rootUrl,
+    PURCHASE_ORDER_ITEMS_ENDPOINTS.deletePurchaseOrderItem,
+    token,
+    purchaseOrderItemId
+  )
+}
+
+const createPurchaseOrderItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  purchaseOrderItem: BridalLivePurchaseOrderItem
+): Promise<BridalLivePurchaseOrderItem> => {
+  return createData<BridalLivePurchaseOrderItem>(
+    rootUrl,
+    PURCHASE_ORDER_ITEMS_ENDPOINTS.createPurchaseOrderItem,
+    token,
+    purchaseOrderItem
   )
 }
 
@@ -817,6 +891,73 @@ const completeReceivingVoucher = async (
     })
 }
 
+const createReceivingVoucher = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  receivingVoucher: BridalLiveReceivingVoucher
+): Promise<BridalLiveReceivingVoucher> => {
+  return createData<BridalLiveReceivingVoucher>(
+    rootUrl,
+    RECEIVING_VOUCHERS_ENDPOINTS.createReceivingVoucher,
+    token,
+    receivingVoucher
+  )
+}
+
+// RECEIVING_VOUCHER_ITEMS_ENDPOINTS
+/**
+ * Fetch BridalLive receivingVoucherItems. Uses the receivingVoucherItems/list endpoint and returns the result.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/purchase-order-controller/listUsingPOST_52
+ * @param token BridalLive token used to authenticate the request
+ * @param filterCriteria POST request body
+ */
+const fetchAllReceivingVoucherItems = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  filterCriteria: ItemListCriteria
+): Promise<BridalLiveReceivingVoucherItem[]> => {
+  return fetchAllData<BridalLiveReceivingVoucherItem, ItemListCriteria>(
+    rootUrl,
+    RECEIVING_VOUCHER_ITEMS_ENDPOINTS.allReceivingVoucherItems,
+    token,
+    filterCriteria
+  )
+}
+
+/**
+ * Detele BridalLive receivingVoucherItem by id. Uses the receivingVoucherItems/{id} endpoint.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/receivingVoucherItem-controller/deleteUsingDELETE_32
+ * @param token BridalLive token used to authenticate the request
+ * @param receivingVoucherItemId ID of the receivingVoucherItem to fetch
+ */
+const deleteReceivingVoucherItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  receivingVoucherItemId: string | number
+): Promise<BridalLiveReceivingVoucherItem> => {
+  return deleteData<BridalLiveReceivingVoucherItem>(
+    rootUrl,
+    RECEIVING_VOUCHER_ITEMS_ENDPOINTS.deleteReceivingVoucherItem,
+    token,
+    receivingVoucherItemId
+  )
+}
+
+const createReceivingVoucherItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  receivingVoucher: BridalLiveReceivingVoucherItem
+): Promise<BridalLiveReceivingVoucherItem> => {
+  return createData<BridalLiveReceivingVoucherItem>(
+    rootUrl,
+    RECEIVING_VOUCHER_ITEMS_ENDPOINTS.createReceivingVoucherItem,
+    token,
+    receivingVoucher
+  )
+}
+
 /**
  * Fetch BridalLive posTransactions. Uses the posTransactions/list endpoint and returns the result.
  *
@@ -857,6 +998,19 @@ const deletePosTransaction = async (
   )
 }
 
+const createPosTransaction = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  posTransaction: BridalLivePosTransaction
+): Promise<BridalLivePosTransaction> => {
+  return createData<BridalLivePosTransaction>(
+    rootUrl,
+    POS_TRANSACTIONS_ENDPOINTS.createPosTransaction,
+    token,
+    posTransaction
+  )
+}
+
 /**
  * Fetch BridalLive posTransactionLineItemLineItems. Uses the posTransactionLineItemLineItems/list endpoint and returns the result.
  *
@@ -877,6 +1031,37 @@ const fetchAllPosTransactionItems = async (
   )
 }
 
+/**
+ * Detele BridalLive posTransactionItem by id. Uses the posTransactionItems/{id} endpoint.
+ *
+ * @see https://app.bridallive.com/bl-server/swagger-ui.html#/posTransactionItem-controller/deleteUsingDELETE_32
+ * @param token BridalLive token used to authenticate the request
+ * @param posTransactionItemId ID of the posTransactionItem to fetch
+ */
+const deletePosTransactionItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  posTransactionItemId: string | number
+): Promise<BridalLivePosTransactionLineItem> => {
+  return deleteData<BridalLivePosTransactionLineItem>(
+    rootUrl,
+    POS_TRANSACTION_ITEMS_ENDPOINTS.deletePosTransactionItem,
+    token,
+    posTransactionItemId
+  )
+}
+const createPosTransactionItem = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  posTransactionItem: BridalLivePosTransactionLineItem
+): Promise<BridalLivePosTransactionLineItem> => {
+  return createData<BridalLivePosTransactionLineItem>(
+    rootUrl,
+    POS_TRANSACTION_ITEMS_ENDPOINTS.createPosTransactionItem,
+    token,
+    posTransactionItem
+  )
+}
 /**
  * Fetch BridalLive payments. Uses the payments/list endpoint and returns the result.
  *
@@ -1191,18 +1376,29 @@ export default {
   deleteItem,
   createItem,
   fetchAllPurchaseOrders,
+  createPurchaseOrder,
   createPurchaseOrderForItems,
   updatePurchaseOrder,
   deletePurchaseOrder,
+  fetchAllPurchaseOrderItems,
+  deletePurchaseOrderItem,
+  createPurchaseOrderItem,
   fetchAllReceivingVouchers,
   deleteReceivingVoucher,
+  createReceivingVoucher,
   createReceivingVoucherForPOItems,
   updateReceivingVoucher,
+  fetchAllReceivingVoucherItems,
+  deleteReceivingVoucherItem,
+  createReceivingVoucherItem,
   updateItem,
   completeReceivingVoucher,
   fetchAllPosTransactions,
   deletePosTransaction,
+  createPosTransaction,
   fetchAllPosTransactionItems,
+  deletePosTransactionItem,
+  createPosTransactionItem,
   fetchAllPayments,
   deletePayment,
   fetchAllContacts,

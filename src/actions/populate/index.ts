@@ -3,7 +3,12 @@ import pluralize from 'pluralize'
 import BridalLiveAPI, {
   CreateFunction,
 } from '../../integrations/BridalLive/api'
-import { BridalLiveToken } from '../../integrations/BridalLive/apiTypes'
+import {
+  BridalLivePosTransactionLineItem,
+  BridalLivePurchaseOrderItem,
+  BridalLiveReceivingVoucherItem,
+  BridalLiveToken,
+} from '../../integrations/BridalLive/apiTypes'
 import { logError, logHeader, logInfo, logSuccess } from '../../logger'
 import {
   BL_DEMO_ACCT_GOWN_DEPT_ID,
@@ -14,13 +19,33 @@ import { BridalLiveDemoData } from '../../types'
 import obfuscateGown from './obfuscate/gown'
 import obfuscateItemAttribute from './obfuscate/itemAttribute'
 import obfuscateItemImage from './obfuscate/itemImage'
+import obfuscatePurchaseOrder from './obfuscate/purchaseOrder'
+import obfuscatePurchaseOrderLineItem from './obfuscate/purchaseOrderLineItem'
 import obfuscateVendor from './obfuscate/vendor'
+
+export interface DataWithLineItems {
+  parentData: any
+  // | BridalLiveReceivingVoucher
+  // | BridalLivePosTransaction
+  lineItems: BridalLivePurchaseOrderItem[]
+  // | BridalLiveReceivingVoucherItem[]
+  // | BridalLivePosTransactionLineItem[]
+}
+
+type LineItemData =
+  | BridalLivePurchaseOrderItem
+  | BridalLiveReceivingVoucherItem
+  | BridalLivePosTransactionLineItem
 
 type ObfuscateFunction =
   | typeof obfuscateGown
   | typeof obfuscateVendor
   | typeof obfuscateItemImage
   | typeof obfuscateItemAttribute
+
+type ObfuscateWithLineItemFunction = typeof obfuscatePurchaseOrder
+
+type ObfuscateLineItemFunction = typeof obfuscatePurchaseOrderLineItem
 
 const populateDemoAccount = async (demoAccounttoken: BridalLiveToken) => {
   logHeader(`Populating BridalLive Demo account`)
@@ -40,6 +65,8 @@ const importCustomerData = async (
     vendors: {},
     itemImages: {},
     attributes: {},
+    purchaseOrders: {},
+    purchaseOrderItems: {},
   }
   // import vendors
   demoData = await importData(
@@ -77,8 +104,32 @@ const importCustomerData = async (
     obfuscateItemAttribute,
     BridalLiveAPI.createAttribute
   )
+
+  // import purchase orders and purchase order line items
+  importDataWithLineItems(
+    demoAccountToken,
+    demoData,
+    'purchaseOrders',
+    CUSTOMER_DATA_FILES.purchaseOrders,
+    CUSTOMER_DATA_FILES.purchaseOrderItems,
+    obfuscatePurchaseOrder,
+    obfuscatePurchaseOrderLineItem,
+    BridalLiveAPI.createPurchaseOrder,
+    BridalLiveAPI.createPurchaseOrderItem
+  )
 }
 
+/**
+ * Obfuscates and imports basic BridalLive data types like vendors, items,
+ * attributes etc.
+ *
+ * @param demoAccountToken
+ * @param demoData
+ * @param type
+ * @param dataFilename
+ * @param obfuscateFn
+ * @param createFn
+ */
 const importData = async (
   demoAccountToken: BridalLiveToken,
   demoData: BridalLiveDemoData,
@@ -126,6 +177,122 @@ const importData = async (
         }
       } catch (error) {
         logError('Error while creating demo date', error)
+      }
+    } else {
+      logInfo(`...skipped import of ${pluralize.singular(type)}`)
+    }
+  }
+  return demoData
+}
+
+/**
+ * Obfuscates and imports BridalLive data types that include line items like
+ * purchaseOrders, receivingVouchers, posTransactions
+ *
+ * @param demoAccountToken
+ * @param demoData
+ * @param type
+ * @param dataFilename
+ * @param obfuscateFn
+ * @param createFn
+ */
+const importDataWithLineItems = async (
+  demoAccountToken: BridalLiveToken,
+  demoData: BridalLiveDemoData,
+  type: keyof BridalLiveDemoData,
+  dataFilename: string,
+  lineItemDataFilename: string,
+  obfuscateFn: ObfuscateWithLineItemFunction,
+  obfuscateLineItemFn: ObfuscateLineItemFunction,
+  createFn: CreateFunction,
+  createLineItemFn: CreateFunction
+) => {
+  const mappedCustomerData = await _readCustomerDataFile(dataFilename)
+  const mappedCustomerLineItemData = await _readCustomerDataFile(
+    lineItemDataFilename
+  )
+
+  const originalIds = Object.keys(mappedCustomerData)
+  logInfo(`Importing ${originalIds.length} ${type}`)
+
+  for (const id of originalIds) {
+    let data = mappedCustomerData[id]
+    logInfo(
+      `Preparing to import ${pluralize.singular(type)} : ${
+        data.hasOwnProperty('name') && data.name ? data.name : data.id
+      }`
+    )
+
+    const dataWithLineItems: DataWithLineItems = obfuscateFn(
+      demoData,
+      id,
+      data,
+      mappedCustomerLineItemData
+    )
+    if (dataWithLineItems) {
+      try {
+        const createdParentData = await createFn(
+          BL_QA_ROOT_URL,
+          demoAccountToken,
+          dataWithLineItems.parentData
+        )
+        if (createdParentData) {
+          logSuccess(
+            `...created ${pluralize.singular(type)}: \n\tDemo Data ID = ${
+              createdParentData.id
+            }\n\tOriginal ID = ${id}`
+          )
+          const data = {
+            newId: createdParentData.id,
+            cleanData: createdParentData,
+          }
+          demoData[type][id] = data
+          console.log(`added to: [${type}][${id}]`)
+          console.log(data)
+
+          // obfuscate and create each of the associated line items
+          for await (let lineItem of dataWithLineItems.lineItems) {
+            logInfo(
+              `Preparing to import ${pluralize.singular(type)} line item: ${
+                lineItem.hasOwnProperty('itemVendorItemName') &&
+                lineItem.itemVendorItemName
+                  ? lineItem.itemVendorItemName
+                  : lineItem.id
+              }`
+            )
+            const cleanedLineItem = obfuscateLineItemFn(demoData, lineItem)
+            console.log('back from obfuscate function')
+            if (cleanedLineItem) {
+              console.log('have a valid cleaned item')
+              try {
+                const createdLineItem = await createLineItemFn(
+                  BL_QA_ROOT_URL,
+                  demoAccountToken,
+                  cleanedLineItem
+                )
+
+                if (createdLineItem) {
+                  logSuccess(
+                    `...created ${pluralize.singular(
+                      type
+                    )} line item: \n\tID = ${createdParentData.id}`
+                  )
+                }
+              } catch (error) {
+                logError('Error while creating demo line item data', error)
+              }
+            } else {
+              logInfo(
+                `...skipped import of ${pluralize.singular(type)} line item`
+              )
+            }
+          }
+        }
+      } catch (error) {
+        logError(
+          `Error while creating demo data: ${pluralize.singular(type)}`,
+          error
+        )
       }
     } else {
       logInfo(`...skipped import of ${pluralize.singular(type)}`)

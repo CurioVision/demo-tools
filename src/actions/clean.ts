@@ -14,6 +14,28 @@ const cleanBridalLiveDemoAccount = async (
 ) => {
   logHeader(`Rolling back BridalLive Demo account`)
   try {
+    // fetch and delete vendors
+    await fetchAllAndDelete(
+      'vendor',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllVendors,
+      BridalLiveApi.deleteVendor,
+      { status: '', isVendorVisibleOnLookbook: '' }
+    )
+    // fetch and delete items
+    await fetchAllAndDelete(
+      'item',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllItems,
+      BridalLiveApi.deleteItem
+    )
+    // fetch and delete itemImages
+    await fetchAllAndDelete(
+      'itemImage',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllItemImages,
+      BridalLiveApi.deleteItemImage
+    )
     // fetch and delete purchase orders
     await fetchAllAndDelete(
       'purchaseOrder',
@@ -21,6 +43,14 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.fetchAllPurchaseOrders,
       BridalLiveApi.deletePurchaseOrder,
       { orderType: '', status: '' }
+    )
+    // fetch and delete purchase orders items
+    await fetchAllAndDelete(
+      'purchaseOrderItem',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllPurchaseOrderItems,
+      BridalLiveApi.deletePurchaseOrderItem,
+      {}
     )
     // fetch and delete receiving orders
     await fetchAllAndDelete(
@@ -30,12 +60,13 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.deleteReceivingVoucher,
       { status: '' }
     )
-    // fetch and delete payments
+    // fetch and delete receiving order items
     await fetchAllAndDelete(
-      'payment',
+      'receivingVoucherItem',
       demoAccounttoken,
-      BridalLiveApi.fetchAllPayments,
-      BridalLiveApi.deletePayment
+      BridalLiveApi.fetchAllReceivingVoucherItems,
+      BridalLiveApi.deleteReceivingVoucherItem,
+      {}
     )
     // fetch and delete pos transactions
     await fetchAllAndDelete(
@@ -44,28 +75,21 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.fetchAllPosTransactions,
       BridalLiveApi.deletePosTransaction
     )
-    // fetch and delete items
+    // fetch and delete pos transaction items
     await fetchAllAndDelete(
-      'item',
+      'posTransactionItem',
       demoAccounttoken,
-      BridalLiveApi.fetchAllItems,
-      BridalLiveApi.deleteItem
+      BridalLiveApi.fetchAllPosTransactionItems,
+      BridalLiveApi.deletePosTransactionItem
     )
-    // fetch and delete vendors
-    await fetchAllAndDelete(
-      'vendor',
-      demoAccounttoken,
-      BridalLiveApi.fetchAllVendors,
-      BridalLiveApi.deleteVendor,
-      { status: '', isVendorVisibleOnLookbook: '' }
-    )
-    // fetch and delete itemImages
-    await fetchAllAndDelete(
-      'itemImage',
-      demoAccounttoken,
-      BridalLiveApi.fetchAllItemImages,
-      BridalLiveApi.deleteItemImage
-    )
+    // fetch and delete payments
+    // await fetchAllAndDelete(
+    //   'payment',
+    //   demoAccounttoken,
+    //   BridalLiveApi.fetchAllPayments,
+    //   BridalLiveApi.deletePayment
+    // )
+
     // fetch and delete contacts
     // await fetchAllAndDelete(
     //   'contact',

@@ -14,8 +14,33 @@ export function getRandomInt(min, max) {
   max = Math.floor(max)
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
+/**
+ * Returns a date string that is properly formatted for using in
+ * BridalLive API requests (e.g. 2019-01-01)
+ * @param date
+ */
+const bridalLiveDateString = (date: Date | null) => {
+  if (!date) return null
 
-const obfuscateDate = (date: Date) => {
+  var dd = date.getDate()
+
+  var mm = date.getMonth() + 1
+  var yyyy = date.getFullYear()
+  let dayStr = dd.toString()
+  let monthStr = mm.toString()
+  let yearStr = yyyy.toString()
+  if (dd < 10) {
+    dayStr = '0' + dd.toString()
+  }
+
+  if (mm < 10) {
+    monthStr = '0' + mm.toString()
+  }
+
+  return `${yearStr}-${monthStr}-${dayStr}`
+}
+
+export const obfuscateDate = (date: Date) => {
   // in order to make sure we don't create dates in the future and recent dates
   // stay relatively recent for effective analysis, we
   const diffDays = moment(new Date()).diff(moment(date), 'days')
@@ -36,6 +61,12 @@ const obfuscateDate = (date: Date) => {
   logDebug(`original date = ${date.toISOString()}`)
   logDebug(`offset date = ${offsetDate.toISOString()}`)
   return offsetDate
+}
+
+export const obfuscateDateAsBridalLiveString = (dateStr: string | null) => {
+  if (!dateStr) return null
+
+  return bridalLiveDateString(obfuscateDate(new Date(dateStr)))
 }
 
 export const obfuscateBaseBridalLiveData = (data: any) => {
