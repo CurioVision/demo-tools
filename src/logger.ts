@@ -1,5 +1,6 @@
 import boxen from 'boxen'
 import chalk from 'chalk'
+import fs from 'fs'
 import { GLOBAL_DEBUG_KEY } from './settings'
 
 const header = chalk.bold.white
@@ -9,25 +10,42 @@ const error = chalk.bold.red
 const errorDetails = chalk.red
 const warning = chalk.keyword('orange')
 
+const consoleOutputFile = new console.Console(
+  fs.createWriteStream('./output.txt')
+)
+const log = (message: string, debugMessage: boolean = false) => {
+  // if it's not a debug message write to both loggers
+  if (!debugMessage) {
+    console.log(message)
+    consoleOutputFile.log(message)
+  } else {
+    // since it's a debug message, only output to console if the debug flag
+    // was enabled. note: debug messages always get written th output.txt
+    if (global[GLOBAL_DEBUG_KEY]) console.log(message)
+
+    consoleOutputFile.log(message)
+  }
+}
+
 export const logHeader = (message: string) => {
-  console.log('\n')
-  console.log(header(message))
+  log('\n')
+  log(header(message))
 }
 
 export const logInfo = (message: string | object) => {
-  if (typeof message === 'string') console.log(info(message))
-  else console.log(info(JSON.stringify(message)))
+  if (typeof message === 'string') log(info(message))
+  else log(info(JSON.stringify(message)))
 }
 
 export const logSuccess = (message: string | object) => {
-  if (typeof message === 'string') console.log(success(message))
-  else console.log(success(JSON.stringify(message)))
+  if (typeof message === 'string') log(success(message))
+  else log(success(JSON.stringify(message)))
 }
 
 export const logError = (message: string, errorObject: object | null) => {
-  console.log(error(message))
+  log(error(message))
   if (errorObject) {
-    console.log(errorDetails(JSON.stringify(errorObject)))
+    log(errorDetails(JSON.stringify(errorObject)))
   }
   if (global[GLOBAL_DEBUG_KEY]) {
     console.trace()
@@ -35,14 +53,12 @@ export const logError = (message: string, errorObject: object | null) => {
 }
 
 export const logDebug = (message: string) => {
-  if (global[GLOBAL_DEBUG_KEY]) {
-    if (typeof message === 'string') console.log(info(message))
-    else console.log(info(JSON.stringify(message)))
-  }
+  if (typeof message === 'string') log(info(message), true)
+  else log(info(JSON.stringify(message)), true)
 }
 
 export const logSevereError = (message: string, errorObject: object | null) => {
-  console.log(
+  log(
     `${boxen(
       '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nSTOP\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
       {
@@ -56,9 +72,9 @@ export const logSevereError = (message: string, errorObject: object | null) => {
       }
     )}`
   )
-  console.log(error(message))
+  log(error(message))
   if (errorObject) {
-    console.log(errorDetails(JSON.stringify(errorObject)))
+    log(errorDetails(JSON.stringify(errorObject)))
   }
   if (global[GLOBAL_DEBUG_KEY]) {
     console.trace()
