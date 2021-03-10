@@ -14,28 +14,6 @@ const cleanBridalLiveDemoAccount = async (
 ) => {
   logHeader(`Rolling back BridalLive Demo account`)
   try {
-    // fetch and delete vendors
-    await fetchAllAndDelete(
-      'vendor',
-      demoAccounttoken,
-      BridalLiveApi.fetchAllVendors,
-      BridalLiveApi.deleteVendor,
-      { status: '', isVendorVisibleOnLookbook: '' }
-    )
-    // fetch and delete items
-    await fetchAllAndDelete(
-      'item',
-      demoAccounttoken,
-      BridalLiveApi.fetchAllItems,
-      BridalLiveApi.deleteItem
-    )
-    // fetch and delete itemImages
-    await fetchAllAndDelete(
-      'itemImage',
-      demoAccounttoken,
-      BridalLiveApi.fetchAllItemImages,
-      BridalLiveApi.deleteItemImage
-    )
     // fetch and delete purchase orders
     await fetchAllAndDelete(
       'purchaseOrder',
@@ -82,6 +60,28 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.fetchAllPosTransactionItems,
       BridalLiveApi.deletePosTransactionItem
     )
+    // fetch and delete items
+    await fetchAllAndDelete(
+      'item',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllItems,
+      BridalLiveApi.deleteItem
+    )
+    // fetch and delete itemImages
+    await fetchAllAndDelete(
+      'itemImage',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllItemImages,
+      BridalLiveApi.deleteItemImage
+    )
+    // fetch and delete vendors
+    await fetchAllAndDelete(
+      'vendor',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllVendors,
+      BridalLiveApi.deleteVendor,
+      { status: '', isVendorVisibleOnLookbook: '' }
+    )
     // fetch and delete payments
     // await fetchAllAndDelete(
     //   'payment',
@@ -122,9 +122,15 @@ const fetchAllAndDelete = async (
   } else {
     logSuccess(`...No ${itemType}s need to be deleted`)
   }
-  for (const item of items) {
+  for await (const item of items) {
     try {
-      logInfo(`\tAttempting to delete ${itemType} with id: ${item.id}`)
+      logInfo(
+        `\tAttempting to delete ${itemType} with id: ${item.id} ${
+          Object.hasOwnProperty('name') && item['name']
+            ? `with name: ${item['name']}`
+            : ''
+        }`
+      )
       await deleteFn(BL_QA_ROOT_URL, token, item.id)
       logSuccess(`\t...Deleted ${item.id}`)
     } catch (error) {

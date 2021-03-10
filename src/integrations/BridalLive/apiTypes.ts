@@ -299,7 +299,7 @@ export interface BridalLiveItemTransaction extends BaseBridalLiveObject {
   color: string | null // null
   color2: string | null // null
   contactId: number // 1859702
-  contactName: string // "Savvy Bridal"
+  contactName: string | null // "Savvy Bridal"
   includedTaxAmount: number // 0
   itemDescription: string // "Alex*"
   itemId: number // 1398153
@@ -326,7 +326,7 @@ export interface BridalLiveReceivingEntry {
   purchaseOrderNumber: number // 2034,
   vendorCode: string // "SN",
   contactId: string // null,
-  contactName: string // null,
+  contactName: string | null // null,
   vendorItemName: string // "44045",
   recvQty: number // 1,
   size: string // "10",
@@ -557,7 +557,7 @@ export interface BridalLivePosTransaction extends BaseBridalLiveObject {
   fee: number //0.0;
   totalAmount: number //0.0;
   employeeName: string //Ingrid Heilke';
-  contactName: string //Matt Gabor';
+  contactName: string | null //Matt Gabor';
   contactPhone: string //4015551212';
   contactPhoneType: number //3;
   eventDate: null
@@ -656,7 +656,7 @@ export interface BridalLivePurchaseOrder extends BaseBridalLiveObject {
   vendor: null
   qtyDue: null
   unfilledPercent: null
-  contactName: null
+  contactName: string | null
   contactId: null
   eventContactName: null
   eventContactId: null
@@ -693,7 +693,7 @@ export interface BridalLivePurchaseOrderItem extends BaseBridalLiveObject {
   contactId: number // 37906
   sizeUpchargeApplied: false
   status: string // 'C'
-  contactName: null
+  contactName: string | null
   eventItemMemberName: null
   contactPhone: null
   contactPhoneType: null
@@ -748,8 +748,8 @@ export interface BridalLiveReceivingVoucherItem extends BaseBridalLiveObject {
   itemSize: string // ''
   itemColor2: string // ''
   status: string // 'C'
-  contactId: null
-  contactName: null
+  contactId: number | null
+  contactName: string | null
   contactHomePhoneNumber: null
   contactWorkPhoneNumber: null
   contactMobilePhoneNumber: null
@@ -824,7 +824,7 @@ export interface BridalLivePayment extends BaseBridalLiveObject {
   amountRefunded: number
   changeAmount: number
   contactId: number
-  contactName: string
+  contactName: string | null
   createdByUser: string
   createdDate: string
   date: string

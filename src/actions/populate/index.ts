@@ -4,69 +4,76 @@ import BridalLiveAPI, {
   CreateFunction,
 } from '../../integrations/BridalLive/api'
 import {
-  BridalLivePosTransactionLineItem,
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucherItem,
   BridalLiveToken,
 } from '../../integrations/BridalLive/apiTypes'
-import { logError, logHeader, logInfo, logSuccess } from '../../logger'
 import {
-  BL_DEMO_ACCT_GOWN_DEPT_ID,
-  BL_QA_ROOT_URL,
-  CUSTOMER_DATA_FILES,
-} from '../../settings'
-import { BridalLiveDemoData } from '../../types'
-import obfuscateGown from './obfuscate/gown'
+  logDebug,
+  logError,
+  logHeader,
+  logInfo,
+  logSuccess,
+} from '../../logger'
+import { BL_QA_ROOT_URL, CUSTOMER_DATA_FILES } from '../../settings'
+import {
+  BridalLiveDemoData,
+  MappedBridalLivePurchaseOrderItems,
+  MappedBridalLiveReceivingVoucherItems,
+} from '../../types'
+import obfuscateItem from './obfuscate/item'
 import obfuscateItemAttribute from './obfuscate/itemAttribute'
 import obfuscateItemImage from './obfuscate/itemImage'
 import obfuscatePurchaseOrder from './obfuscate/purchaseOrder'
 import obfuscatePurchaseOrderLineItem from './obfuscate/purchaseOrderLineItem'
+import obfuscateReceivingVoucher from './obfuscate/receivingVoucher'
+import obfuscateReceivingVoucherLineItem from './obfuscate/receivingVoucherLineItem'
 import obfuscateVendor from './obfuscate/vendor'
 
 export interface DataWithLineItems {
   parentData: any
   // | BridalLiveReceivingVoucher
   // | BridalLivePosTransaction
-  lineItems: BridalLivePurchaseOrderItem[]
-  // | BridalLiveReceivingVoucherItem[]
+  lineItems:
+    | MappedBridalLivePurchaseOrderItems
+    | MappedBridalLiveReceivingVoucherItems
   // | BridalLivePosTransactionLineItem[]
 }
 
-type LineItemData =
-  | BridalLivePurchaseOrderItem
-  | BridalLiveReceivingVoucherItem
-  | BridalLivePosTransactionLineItem
-
 type ObfuscateFunction =
-  | typeof obfuscateGown
+  | typeof obfuscateItem
   | typeof obfuscateVendor
   | typeof obfuscateItemImage
   | typeof obfuscateItemAttribute
 
-type ObfuscateWithLineItemFunction = typeof obfuscatePurchaseOrder
+type ObfuscateWithLineItemFunction =
+  | typeof obfuscatePurchaseOrder
+  | typeof obfuscateReceivingVoucher
 
-type ObfuscateLineItemFunction = typeof obfuscatePurchaseOrderLineItem
+type ObfuscateLineItemFunction = (
+  demoData: BridalLiveDemoData,
+  lineItem: BridalLivePurchaseOrderItem | BridalLiveReceivingVoucherItem
+) => BridalLivePurchaseOrderItem | BridalLiveReceivingVoucherItem
 
 const populateDemoAccount = async (demoAccounttoken: BridalLiveToken) => {
   logHeader(`Populating BridalLive Demo account`)
   try {
-    importCustomerData(demoAccounttoken, BL_DEMO_ACCT_GOWN_DEPT_ID)
+    importCustomerData(demoAccounttoken)
   } catch (error) {
     logError('Error occurred while populating BridalLive demo account', error)
   }
 }
 
-const importCustomerData = async (
-  demoAccountToken: BridalLiveToken,
-  demoGownDeptId: number
-) => {
+const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
   let demoData: BridalLiveDemoData = {
-    gowns: {},
+    items: {},
     vendors: {},
     itemImages: {},
     attributes: {},
     purchaseOrders: {},
     purchaseOrderItems: {},
+    receivingVouchers: {},
+    receivingVoucherItems: {},
   }
   // import vendors
   demoData = await importData(
@@ -81,9 +88,9 @@ const importCustomerData = async (
   demoData = await importData(
     demoAccountToken,
     demoData,
-    'gowns',
-    CUSTOMER_DATA_FILES.gowns,
-    obfuscateGown,
+    'items',
+    CUSTOMER_DATA_FILES.items,
+    obfuscateItem,
     BridalLiveAPI.createItem
   )
   // import item images
@@ -106,16 +113,31 @@ const importCustomerData = async (
   )
 
   // import purchase orders and purchase order line items
-  importDataWithLineItems(
+  demoData = await importDataWithLineItems(
     demoAccountToken,
     demoData,
     'purchaseOrders',
+    'purchaseOrderItems',
     CUSTOMER_DATA_FILES.purchaseOrders,
     CUSTOMER_DATA_FILES.purchaseOrderItems,
     obfuscatePurchaseOrder,
     obfuscatePurchaseOrderLineItem,
     BridalLiveAPI.createPurchaseOrder,
     BridalLiveAPI.createPurchaseOrderItem
+  )
+
+  // import receiving vouchers and receiving voucher line items
+  demoData = await importDataWithLineItems(
+    demoAccountToken,
+    demoData,
+    'receivingVouchers',
+    'receivingVoucherItems',
+    CUSTOMER_DATA_FILES.receivingVouchers,
+    CUSTOMER_DATA_FILES.receivingVoucherItems,
+    obfuscateReceivingVoucher,
+    obfuscateReceivingVoucherLineItem,
+    BridalLiveAPI.createReceivingVoucher,
+    BridalLiveAPI.createReceivingVoucherItem
   )
 }
 
@@ -142,12 +164,12 @@ const importData = async (
   const originalIds = Object.keys(mappedCustomerData)
   logInfo(`Importing ${originalIds.length} ${type}`)
 
-  let slicedIds = type === 'gowns' ? originalIds.slice(0, 10) : originalIds
+  let slicedIds = type === 'items' ? originalIds.slice(0, 10) : originalIds
   for (const id of slicedIds) {
     let data = mappedCustomerData[id]
     logInfo(
       `Preparing to import ${pluralize.singular(type)} : ${
-        data.hasOwnProperty('name') && data.name ? data.name : data.id
+        data.hasOwnProperty('name') && data.name ? data.name : id
       }`
     )
 
@@ -161,9 +183,9 @@ const importData = async (
         )
         if (createdData) {
           logSuccess(
-            `...created ${pluralize.singular(type)}: \n\tID = ${
+            `...created ${pluralize.singular(type)}: \n\tDEMO DATA ID = ${
               createdData.id
-            }, \n\tNAME = ${
+            }, \n\tORIGINAL ID = ${id}, \n\tNAME = ${
               createdData.hasOwnProperty('name')
                 ? createdData['name']
                 : 'Data type has no name'
@@ -200,6 +222,7 @@ const importDataWithLineItems = async (
   demoAccountToken: BridalLiveToken,
   demoData: BridalLiveDemoData,
   type: keyof BridalLiveDemoData,
+  lineItemType: keyof BridalLiveDemoData,
   dataFilename: string,
   lineItemDataFilename: string,
   obfuscateFn: ObfuscateWithLineItemFunction,
@@ -215,11 +238,11 @@ const importDataWithLineItems = async (
   const originalIds = Object.keys(mappedCustomerData)
   logInfo(`Importing ${originalIds.length} ${type}`)
 
-  for (const id of originalIds) {
+  for await (const id of originalIds) {
     let data = mappedCustomerData[id]
     logInfo(
       `Preparing to import ${pluralize.singular(type)} : ${
-        data.hasOwnProperty('name') && data.name ? data.name : data.id
+        data.hasOwnProperty('name') && data.name ? data.name : id
       }`
     )
 
@@ -238,20 +261,23 @@ const importDataWithLineItems = async (
         )
         if (createdParentData) {
           logSuccess(
-            `...created ${pluralize.singular(type)}: \n\tDemo Data ID = ${
+            `...created ${pluralize.singular(type)}: \n\tDEMO DATA ID = ${
               createdParentData.id
-            }\n\tOriginal ID = ${id}`
+            }\n\tORIGINAL ID = ${id}`
           )
           const data = {
             newId: createdParentData.id,
             cleanData: createdParentData,
           }
           demoData[type][id] = data
-          console.log(`added to: [${type}][${id}]`)
-          console.log(data)
+          logDebug(`added to: [${type}][${id}]`)
+          logDebug(data)
 
           // obfuscate and create each of the associated line items
-          for await (let lineItem of dataWithLineItems.lineItems) {
+          for await (let originalLineItemId of Object.keys(
+            dataWithLineItems.lineItems
+          )) {
+            const lineItem = dataWithLineItems.lineItems[originalLineItemId]
             logInfo(
               `Preparing to import ${pluralize.singular(type)} line item: ${
                 lineItem.hasOwnProperty('itemVendorItemName') &&
@@ -261,9 +287,9 @@ const importDataWithLineItems = async (
               }`
             )
             const cleanedLineItem = obfuscateLineItemFn(demoData, lineItem)
-            console.log('back from obfuscate function')
+            logDebug('back from obfuscate function')
             if (cleanedLineItem) {
-              console.log('have a valid cleaned item')
+              logDebug('have a valid cleaned item')
               try {
                 const createdLineItem = await createLineItemFn(
                   BL_QA_ROOT_URL,
@@ -277,6 +303,11 @@ const importDataWithLineItems = async (
                       type
                     )} line item: \n\tID = ${createdParentData.id}`
                   )
+                  const lineItemData = {
+                    newId: createdLineItem.id,
+                    cleanData: createdLineItem,
+                  }
+                  demoData[lineItemType][originalLineItemId] = lineItemData
                 }
               } catch (error) {
                 logError('Error while creating demo line item data', error)

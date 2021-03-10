@@ -51,7 +51,7 @@ export interface MappedBridalLiveItemImages {
 }
 
 export interface BridalLiveCustomerData {
-  gowns: MappedBridalLiveItems
+  items: MappedBridalLiveItems
   purchaseOrders: MappedBridalLivePurchaseOrders
   purchaseOrderItems: MappedBridalLivePurchaseOrderItems
   receivingVouchers: MappedBridalLiveReceivingVouchers
@@ -90,11 +90,17 @@ export interface DemoPurchaseOrdersData
 export interface DemoPurchaseOrderItemsData
   extends DemoData<BridalLivePurchaseOrderItem> {}
 
+export interface DemoReceivingVouchersData
+  extends DemoData<BridalLiveReceivingVoucher> {}
+export interface DemoReceivingVoucherItemsData
+  extends DemoData<BridalLiveReceivingVoucherItem> {}
 export interface BridalLiveDemoData {
-  gowns: { [originalId: number]: DemoItemData }
+  items: { [originalId: number]: DemoItemData }
   vendors: { [originalId: number]: DemoVendorData }
   itemImages: { [originalId: number]: DemoItemImagesData }
   attributes: { [originalId: number]: DemoAttributesData }
   purchaseOrders: { [originalId: number]: DemoPurchaseOrdersData }
   purchaseOrderItems: { [originalId: number]: DemoPurchaseOrderItemsData }
+  receivingVouchers: { [originalId: number]: DemoReceivingVouchersData }
+  receivingVoucherItems: { [originalId: number]: DemoReceivingVoucherItemsData }
 }

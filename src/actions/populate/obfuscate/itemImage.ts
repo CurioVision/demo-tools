@@ -2,8 +2,8 @@ import { BridalLiveItemImage } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
 import { BridalLiveDemoData } from '../../../types'
 import {
-  itemIdInDemoData,
-  itemWasAddedToDemoData,
+  dataIdInDemo,
+  dataWasAddedToDemo,
   obfuscateBaseBridalLiveData,
 } from './utils'
 
@@ -15,7 +15,7 @@ const obfuscateItemImage = (
 ) => {
   // if the corresponding item isn't in demoData, return null so this itemImage
   // doesn't get imported
-  if (!itemWasAddedToDemoData(demoData, itemImage.inventoryItemId)) {
+  if (!dataWasAddedToDemo(demoData, 'items', itemImage.inventoryItemId)) {
     logInfo(`...no corresponding Item was created in demo data`)
     return null
   }
@@ -25,8 +25,9 @@ const obfuscateItemImage = (
   itemImage = obfuscateBaseBridalLiveData(itemImage)
 
   // set new item id
-  itemImage.inventoryItemId = itemIdInDemoData(
+  itemImage.inventoryItemId = dataIdInDemo(
     demoData,
+    'items',
     itemImage.inventoryItemId
   )
 

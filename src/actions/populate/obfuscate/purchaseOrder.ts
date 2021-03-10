@@ -1,8 +1,5 @@
 import { DataWithLineItems } from '..'
-import {
-  BridalLivePurchaseOrder,
-  BridalLivePurchaseOrderItem,
-} from '../../../integrations/BridalLive/apiTypes'
+import { BridalLivePurchaseOrder } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
 import {
   BL_DEMO_ACCT_EMPLOYEE_ID,
@@ -13,7 +10,7 @@ import {
   MappedBridalLivePurchaseOrderItems,
 } from '../../../types'
 import {
-  itemWasAddedToDemoData,
+  dataWasAddedToDemo,
   obfuscateBaseBridalLiveData,
   obfuscateDateAsBridalLiveString,
 } from './utils'
@@ -42,19 +39,22 @@ const obfuscatePurchaseOrder = (
   allLineItems: MappedBridalLivePurchaseOrderItems
 ): DataWithLineItems => {
   // find associated line items
-  const lineItems: BridalLivePurchaseOrderItem[] = Object.values(
-    allLineItems
-  ).filter(
-    (poLineItem: BridalLivePurchaseOrderItem) =>
-      poLineItem.purchaseOrderId.toString() === originalId
-  )
+  const filteredLineItems: MappedBridalLivePurchaseOrderItems = {}
+  Object.keys(allLineItems).forEach((poLineItemId: string) => {
+    const po = allLineItems[poLineItemId]
+    if (po.purchaseOrderId.toString() === originalId) {
+      filteredLineItems[poLineItemId] = po
+    }
+  })
 
   // if none of the lineItems are for gowns that were imported into the demo
   // account, return null so this PO doesn't get imported
-  const shouldImport = lineItems.find((poLineItem) =>
-    itemWasAddedToDemoData(demoData, poLineItem.inventoryItemId)
+  const shouldImport = Object.values(
+    filteredLineItems
+  ).findIndex((poLineItem) =>
+    dataWasAddedToDemo(demoData, 'items', poLineItem.inventoryItemId)
   )
-  if (!shouldImport) {
+  if (shouldImport < 0) {
     logInfo(
       `...none of the Line Items map to corresponding Items that were created in demo data`
     )
@@ -87,7 +87,7 @@ const obfuscatePurchaseOrder = (
       ...purchaseOrder,
       ...StaticValues,
     },
-    lineItems: lineItems,
+    lineItems: filteredLineItems,
   }
 }
 

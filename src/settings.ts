@@ -12,8 +12,12 @@ export const BL_QA_ROOT_URL = 'https://qa.bridallive.com'
 export const BL_DEMO_ACCT_RETAILER_ID = '7f4e8b14'
 export const BL_DEMO_ACCT_API_KEY = 'eeb92d140e9132f4'
 export const BL_DEMO_ACCT_GOWN_DEPT_ID = 15109
+export const BL_DEMO_ACCT_GOWN_DEPT_CODE = 'BG'
+export const BL_DEMO_ACCT_OTHER_DEPT_ID = 15130
+export const BL_DEMO_ACCT_OTHER_DEPT_CODE = 'OTHER'
 export const BL_DEMO_ACCT_TAX_CODE_ID = 2105
 export const BL_DEMO_ACCT_CONTACT_ID = 1057729
+export const BL_DEMO_ACCT_CONTACT_NAME = 'Demo Contact'
 export const BL_DEMO_ACCT_EMPLOYEE_ID = 6625
 export const BL_DEMO_ACCT_EMPLOYEE_NAME = 'Matt Gabor'
 
@@ -54,7 +58,7 @@ export const CUSTOMER_DATA_DIR = './data'
 
 export const CUSTOMER_DATA_FILES = {
   vendors: `${CUSTOMER_DATA_DIR}/vendors.json`,
-  gowns: `${CUSTOMER_DATA_DIR}/gowns.json`,
+  items: `${CUSTOMER_DATA_DIR}/items.json`,
   itemImages: `${CUSTOMER_DATA_DIR}/itemImages.json`,
   attributes: `${CUSTOMER_DATA_DIR}/attributes.json`,
   purchaseOrders: `${CUSTOMER_DATA_DIR}/purchaseOrders.json`,

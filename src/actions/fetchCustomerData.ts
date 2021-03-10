@@ -26,7 +26,7 @@ const fetchCustomerData = async () => {
         BL_CUSTOMER_ACCTS[0].gownDeptId
       )
       _writeDataFile(CUSTOMER_DATA_FILES.vendors, customerData.vendors)
-      _writeDataFile(CUSTOMER_DATA_FILES.gowns, customerData.gowns)
+      _writeDataFile(CUSTOMER_DATA_FILES.items, customerData.items)
       _writeDataFile(CUSTOMER_DATA_FILES.itemImages, customerData.itemImages)
       _writeDataFile(CUSTOMER_DATA_FILES.attributes, customerData.attributes)
       _writeDataFile(
@@ -113,12 +113,12 @@ const fetchAllDataFromCustomer = async (
   )
   // fetch items
   const gowns = await fetchAndMapData(
-    'gown',
+    'item',
     customerToken,
     BridalLiveAPI.fetchAllItems,
     {
       status: '',
-      departmentId: gownDeptId,
+      departmentId: '',
     }
   )
   // fetch attributes
@@ -198,7 +198,7 @@ const fetchAllDataFromCustomer = async (
   // )
   const customerData: BridalLiveCustomerData = {
     vendors: vendors,
-    gowns: gowns,
+    items: gowns,
     itemImages: itemImages,
     attributes: attributes,
     purchaseOrders: purchaseOrders,

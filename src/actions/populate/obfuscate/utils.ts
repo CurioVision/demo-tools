@@ -1,5 +1,6 @@
 import moment from 'moment'
 import { logDebug } from '../../../logger'
+import { BL_CUSTOMER_ACCTS } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 
 /**
@@ -86,12 +87,19 @@ export const obfuscateBaseBridalLiveData = (data: any) => {
   return data
 }
 
-export const itemWasAddedToDemoData = (
-  demoData: BridalLiveDemoData,
-  itemId: string | number
-) => demoData.gowns.hasOwnProperty(itemId) && demoData.gowns[itemId].newId
+export const isCustomerGownDepartmentId = (deptId: number) => {
+  const idx = BL_CUSTOMER_ACCTS.findIndex((acct) => acct.gownDeptId === deptId)
+  return idx >= 0
+}
 
-export const itemIdInDemoData = (
+export const dataWasAddedToDemo = (
   demoData: BridalLiveDemoData,
+  type: keyof BridalLiveDemoData,
+  itemId: string | number
+) => demoData[type].hasOwnProperty(itemId) && demoData[type][itemId].newId
+
+export const dataIdInDemo = (
+  demoData: BridalLiveDemoData,
+  type: keyof BridalLiveDemoData,
   customerItemId: string | number
-) => demoData.gowns[customerItemId].newId
+) => demoData[type][customerItemId].newId
