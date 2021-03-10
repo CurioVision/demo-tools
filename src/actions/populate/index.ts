@@ -4,6 +4,7 @@ import BridalLiveAPI, {
   CreateFunction,
 } from '../../integrations/BridalLive/api'
 import {
+  BridalLivePayment,
   BridalLivePosTransactionLineItem,
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucherItem,
@@ -16,7 +17,11 @@ import {
   logInfo,
   logSuccess,
 } from '../../logger'
-import { BL_QA_ROOT_URL, CUSTOMER_DATA_FILES } from '../../settings'
+import {
+  BL_DEMO_ACCT_EMPLOYEE_ID,
+  BL_QA_ROOT_URL,
+  CUSTOMER_DATA_FILES,
+} from '../../settings'
 import {
   BridalLiveDemoData,
   MappedBridalLivePosTransactionItems,
@@ -26,14 +31,19 @@ import {
 import obfuscateItem from './obfuscate/item'
 import obfuscateItemAttribute from './obfuscate/itemAttribute'
 import obfuscateItemImage from './obfuscate/itemImage'
+import obfuscatePayment, {
+  BridalLivePaymentObfuscationData,
+} from './obfuscate/payment'
 import obfuscatePosTransaction from './obfuscate/posTransaction'
 import obfuscatePosTransactionLineItem from './obfuscate/posTransactionItem'
 import obfuscatePurchaseOrder from './obfuscate/purchaseOrder'
 import obfuscatePurchaseOrderLineItem from './obfuscate/purchaseOrderLineItem'
 import obfuscateReceivingVoucher from './obfuscate/receivingVoucher'
 import obfuscateReceivingVoucherLineItem from './obfuscate/receivingVoucherLineItem'
+import { shouldImportCustomerVendor } from './obfuscate/utils'
 import obfuscateVendor from './obfuscate/vendor'
 
+const LIMIT_ITEM_CNT = 10
 export interface DataWithLineItems {
   parentData: any
   // | BridalLiveReceivingVoucher
@@ -49,6 +59,7 @@ type ObfuscateFunction =
   | typeof obfuscateVendor
   | typeof obfuscateItemImage
   | typeof obfuscateItemAttribute
+  | typeof obfuscatePayment
 
 type ObfuscateWithLineItemFunction =
   | typeof obfuscatePurchaseOrder
@@ -87,6 +98,7 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     receivingVoucherItems: {},
     posTransactions: {},
     posTransactionItems: {},
+    payments: {},
   }
   // import vendors
   demoData = await importData(
@@ -124,7 +136,6 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     obfuscateItemAttribute,
     BridalLiveAPI.createAttribute
   )
-
   // import purchase orders and purchase order line items
   demoData = await importDataWithLineItems(
     demoAccountToken,
@@ -138,7 +149,6 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     BridalLiveAPI.createPurchaseOrder,
     BridalLiveAPI.createPurchaseOrderItem
   )
-
   // import receiving vouchers and receiving voucher line items
   demoData = await importDataWithLineItems(
     demoAccountToken,
@@ -152,7 +162,6 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     BridalLiveAPI.createReceivingVoucher,
     BridalLiveAPI.createReceivingVoucherItem
   )
-
   // import pos transactions and pos transaction line items
   demoData = await importDataWithLineItems(
     demoAccountToken,
@@ -166,6 +175,8 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     BridalLiveAPI.createPosTransaction,
     BridalLiveAPI.createPosTransactionItem
   )
+  // import payments
+  demoData = await importPayments(demoAccountToken, demoData)
 }
 
 /**
@@ -191,44 +202,54 @@ const importData = async (
   const originalIds = Object.keys(mappedCustomerData)
   logInfo(`Importing ${originalIds.length} ${type}`)
 
-  let slicedIds = type === 'items' ? originalIds.slice(0, 10) : originalIds
-  for (const id of slicedIds) {
+  for await (const id of originalIds) {
     let data = mappedCustomerData[id]
-    logInfo(
-      `Preparing to import ${pluralize.singular(type)} : ${
-        data.hasOwnProperty('name') && data.name ? data.name : id
-      }`
-    )
 
-    data = obfuscateFn(demoData, data)
-    if (data) {
-      try {
-        const createdData = await createFn(
-          BL_QA_ROOT_URL,
-          demoAccountToken,
-          data
-        )
-        if (createdData) {
-          logSuccess(
-            `...created ${pluralize.singular(type)}: \n\tDEMO DATA ID = ${
-              createdData.id
-            }, \n\tORIGINAL ID = ${id}, \n\tNAME = ${
-              createdData.hasOwnProperty('name')
-                ? createdData['name']
-                : 'Data type has no name'
-            }`
-          )
-          const data = {
-            newId: createdData.id,
-            cleanData: createdData,
-          }
-          demoData[type][id] = data
-        }
-      } catch (error) {
-        logError('Error while creating demo date', error)
-      }
+    // only import specified vendors. since
+    if (type === 'vendors' && !shouldImportCustomerVendor(id)) {
+      logInfo(
+        `Skipping Vendor import because it is not included in import settings. 
+        \tVendor Name: ${data.name}
+        \tVendor ID: ${id}`
+      )
+      continue
     } else {
-      logInfo(`...skipped import of ${pluralize.singular(type)}`)
+      logInfo(
+        `Preparing to import ${pluralize.singular(type)} : ${
+          data.hasOwnProperty('name') && data.name ? data.name : id
+        }`
+      )
+
+      data = obfuscateFn(demoData, data)
+      if (data) {
+        try {
+          const createdData = await createFn(
+            BL_QA_ROOT_URL,
+            demoAccountToken,
+            data
+          )
+          if (createdData) {
+            logSuccess(
+              `...created ${pluralize.singular(type)}: \n\tDEMO DATA ID = ${
+                createdData.id
+              }, \n\tORIGINAL ID = ${id}, \n\tNAME = ${
+                createdData.hasOwnProperty('name')
+                  ? createdData['name']
+                  : 'Data type has no name'
+              }`
+            )
+            const data = {
+              newId: createdData.id,
+              cleanData: createdData,
+            }
+            demoData[type][id] = data
+          }
+        } catch (error) {
+          logError('Error while creating demo date', error)
+        }
+      } else {
+        logInfo(`...skipped import of ${pluralize.singular(type)}`)
+      }
     }
   }
   return demoData
@@ -354,6 +375,100 @@ const importDataWithLineItems = async (
       }
     } else {
       logInfo(`...skipped import of ${pluralize.singular(type)}`)
+    }
+  }
+  return demoData
+}
+
+/**
+ * Obfuscates payments and adds them to the correct POS Transaction in the
+ * demo account. After payment has been succesfully added, the POS Transaction
+ * is completed.
+ *
+ * @param demoAccountToken
+ * @param demoData
+ * @param type
+ * @param dataFilename
+ * @param obfuscateFn
+ * @param createFn
+ */
+const importPayments = async (
+  demoAccountToken: BridalLiveToken,
+  demoData: BridalLiveDemoData
+) => {
+  const mappedCustomerPayments = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.payments
+  )
+
+  const mappedCustomerTransactions = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.posTransactions
+  )
+
+  const originalIds = Object.keys(mappedCustomerPayments)
+  logInfo(`Importing ${originalIds.length} payments`)
+
+  for await (const id of originalIds) {
+    let paymentData: BridalLivePayment = mappedCustomerPayments[id]
+    logInfo(`Preparing to import payment: ${id}`)
+
+    let obfuscatedPayment: BridalLivePaymentObfuscationData = obfuscatePayment(
+      demoData,
+      paymentData
+    )
+    if (obfuscatedPayment) {
+      try {
+        const updatedPosTransaction = await BridalLiveAPI.addPaymentToPosTransaction(
+          BL_QA_ROOT_URL,
+          demoAccountToken,
+          obfuscatedPayment.cleanData
+        )
+        if (updatedPosTransaction) {
+          logSuccess(
+            `...added payment to POS transaction: \n\tDEMO DATA ID = ${updatedPosTransaction.id}, \n\tORIGINAL ID = ${id}`
+          )
+          const data = {
+            newId: updatedPosTransaction.id,
+            cleanData: updatedPosTransaction,
+          }
+          demoData['payments'][id] = data
+
+          // if the POS associated with this transaction was completed, complete
+          const origTrxId = obfuscatedPayment.originalPosTransactionId.toString()
+          logInfo(
+            `...checking original transaction status before completing transaction. \n\tDEMO DATA TRX ID = ${updatedPosTransaction.id}, \n\tORIGINAL TRX ID = ${origTrxId}`
+          )
+
+          if (Object.keys(mappedCustomerTransactions).includes(origTrxId)) {
+            logInfo(
+              `...original transaction status is: ${
+                mappedCustomerTransactions[origTrxId.toString()].status
+              }`
+            )
+            if (
+              mappedCustomerTransactions[origTrxId].status.toUpperCase() === 'C'
+            ) {
+              logInfo(
+                `...payment's original transaction was completed. Attempting to complete transaction. \n\tDEMO DATA TRX ID = ${updatedPosTransaction.transactionId}, \n\tORIGINAL TRX ID = ${origTrxId}`
+              )
+              const completedTrx = await BridalLiveAPI.completePosTransaction(
+                BL_QA_ROOT_URL,
+                demoAccountToken,
+                updatedPosTransaction.id,
+                BL_DEMO_ACCT_EMPLOYEE_ID
+              )
+              if (completedTrx) {
+                logSuccess(
+                  `...completed transaction: \n\tDEMO DATA ID = ${updatedPosTransaction.id}`
+                )
+              }
+            }
+          }
+        }
+      } catch (error) {
+        logError('Error while creating demo date', error)
+      }
+    } else {
+      logInfo(`...skipped import of payment`)
     }
   }
   return demoData

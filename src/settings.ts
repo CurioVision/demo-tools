@@ -20,6 +20,8 @@ export const BL_DEMO_ACCT_CONTACT_ID = 1057729
 export const BL_DEMO_ACCT_CONTACT_NAME = 'Demo Contact'
 export const BL_DEMO_ACCT_EMPLOYEE_ID = 6625
 export const BL_DEMO_ACCT_EMPLOYEE_NAME = 'Matt Gabor'
+export const BL_DEMO_ACCT_PAYMENT_METHOD_ID = 6369
+export const BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION = 'Cash'
 
 /**
  * The following values are checked prior to ANY BridalLive API calls that
@@ -45,14 +47,33 @@ export const GLOBAL_DEBUG_KEY = 'demoTools_isDebug'
  */
 export const GLOBAL_IS_CUSTOMER_ACTION_KEY = 'demoTools_isCustomerAction'
 
-export const BL_CUSTOMER_ACCTS: BridalCustomerSettings[] = [
-  {
+interface DemoToolCustomerSettings extends BridalCustomerSettings {
+  vendorIdsToImport: number[]
+}
+
+export const BL_CUSTOMER_ACCTS = {
+  customer1: {
     retailerName: 'Heba Adata',
     retailerId: '3f9f9462',
     apiKey: '2da9861cb6fb7f8b',
     gownDeptId: 25316,
+    vendorIdsToImport: [
+      40495, // Stella
+      39541, // Essense of Australia
+    ],
   },
-]
+  customer2: {
+    retailerName: 'Emmy Gorman',
+    retailerId: '5b19f2a7',
+    apiKey: 'd0e652a9d161573d',
+    gownDeptId: 793,
+    vendorIdsToImport: [
+      190, // Casablanca
+      191, // Justin Alexander
+      88573, // Colby John
+    ],
+  },
+}
 
 export const CUSTOMER_DATA_DIR = './data'
 
@@ -67,4 +88,5 @@ export const CUSTOMER_DATA_FILES = {
   receivingVoucherItems: `${CUSTOMER_DATA_DIR}/receivingVoucherItems.json`,
   posTransactions: `${CUSTOMER_DATA_DIR}/posTransactions.json`,
   posTransactionItems: `${CUSTOMER_DATA_DIR}/posTransactionItems.json`,
+  payments: `${CUSTOMER_DATA_DIR}/payments.json`,
 }

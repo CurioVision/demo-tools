@@ -53,6 +53,8 @@ const fetchCustomerData = async () => {
         CUSTOMER_DATA_FILES.posTransactionItems,
         customerData.posTransactionItems
       )
+      _writeDataFile(CUSTOMER_DATA_FILES.payments, customerData.payments)
+
       logSuccess('Wrote customer data files')
     }
   } catch (error) {
@@ -182,18 +184,18 @@ const fetchAllDataFromCustomer = async (
     BridalLiveAPI.fetchAllPosTransactionItems,
     {}
   )
+  // fetch payments
+  const payments = await fetchAndMapData(
+    'payment',
+    customerToken,
+    BridalLiveAPI.fetchAllPayments,
+    {}
+  )
   // fetch contacts
   // const contacts = await fetchAndMapData(
   //   'contact',
   //   customerToken,
   //   BridalLiveAPI.fetchAllContacts,
-  //   {}
-  // )
-  // fetch payments
-  // const payments = await fetchAndMapData(
-  //   'payment',
-  //   customerToken,
-  //   BridalLiveAPI.fetchAllPayments,
   //   {}
   // )
   const customerData: BridalLiveCustomerData = {
@@ -208,7 +210,7 @@ const fetchAllDataFromCustomer = async (
     posTransactions: posTransactions,
     posTransactionItems: posTransactionItems,
     // contacts: contacts,
-    // payments: payments,
+    payments: payments,
   }
   return customerData
 }

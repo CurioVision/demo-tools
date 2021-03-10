@@ -9,6 +9,8 @@ import {
 } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import {
+  dataIdInDemo,
+  dataWasAddedToDemo,
   isCustomerGownDepartmentId,
   obfuscateBaseBridalLiveData,
 } from './utils'
@@ -22,25 +24,31 @@ const StaticValues: Pick<
   marketplaceId: null,
 }
 
-const obfuscateItem = (demoData: BridalLiveDemoData, gown: BridalLiveItem) => {
+const obfuscateItem = (demoData: BridalLiveDemoData, item: BridalLiveItem) => {
+  if (!dataWasAddedToDemo(demoData, 'vendors', item.vendorId)) {
+    logInfo(`...no corresponding Vendor was created in demo data`)
+    return null
+  }
+  logInfo(`...Item has corresponding Vendor in demo data`)
+
   // replace any identifying values
-  logInfo(`...obfuscating gown data`)
-  gown = obfuscateBaseBridalLiveData(gown)
+  logInfo(`...obfuscating Item data`)
+  item = obfuscateBaseBridalLiveData(item)
 
   // set new vendor id
-  gown.vendorId = demoData.vendors[gown.vendorId].newId
+  item.vendorId = dataIdInDemo(demoData, 'vendors', item.vendorId)
 
   // set the department to Bridal Gowns or Other
-  if (isCustomerGownDepartmentId(gown.departmentId)) {
-    gown.departmentId = BL_DEMO_ACCT_GOWN_DEPT_ID
-    gown.departmentCode = BL_DEMO_ACCT_GOWN_DEPT_CODE
+  if (isCustomerGownDepartmentId(item.departmentId)) {
+    item.departmentId = BL_DEMO_ACCT_GOWN_DEPT_ID
+    item.departmentCode = BL_DEMO_ACCT_GOWN_DEPT_CODE
   } else {
-    gown.departmentId = BL_DEMO_ACCT_OTHER_DEPT_ID
-    gown.departmentCode = BL_DEMO_ACCT_OTHER_DEPT_CODE
+    item.departmentId = BL_DEMO_ACCT_OTHER_DEPT_ID
+    item.departmentCode = BL_DEMO_ACCT_OTHER_DEPT_CODE
   }
 
   return {
-    ...gown,
+    ...item,
     ...StaticValues,
   }
 }

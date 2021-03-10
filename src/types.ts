@@ -61,8 +61,8 @@ export interface BridalLiveCustomerData {
   vendors: MappedBridalLiveVendors
   attributes: MappedBridalLiveAttributes
   itemImages: MappedBridalLiveItemImages
+  payments: MappedBridalLivePayments
   // contacts: MappedBridalLiveContacts
-  // payments: MappedBridalLivePayments
 }
 
 export type TrackedBridalLiveTypes =
@@ -100,6 +100,7 @@ export interface DemoPosTransactionData
 export interface DemoPosTransactionItemsData
   extends DemoData<BridalLivePosTransactionLineItem> {}
 
+export interface DemoPaymentsData extends DemoData<BridalLivePayment> {}
 export interface BridalLiveDemoData {
   items: { [originalId: number]: DemoItemData }
   vendors: { [originalId: number]: DemoVendorData }
@@ -111,4 +112,5 @@ export interface BridalLiveDemoData {
   receivingVoucherItems: { [originalId: number]: DemoReceivingVoucherItemsData }
   posTransactions: { [originalId: number]: DemoPosTransactionData }
   posTransactionItems: { [originalId: number]: DemoPosTransactionItemsData }
+  payments: { [originalId: number]: DemoPaymentsData }
 }

@@ -88,7 +88,16 @@ export const obfuscateBaseBridalLiveData = (data: any) => {
 }
 
 export const isCustomerGownDepartmentId = (deptId: number) => {
-  const idx = BL_CUSTOMER_ACCTS.findIndex((acct) => acct.gownDeptId === deptId)
+  const idx = Object.values(BL_CUSTOMER_ACCTS).findIndex(
+    (acct) => acct.gownDeptId === deptId
+  )
+  return idx >= 0
+}
+
+export const shouldImportCustomerVendor = (vendorId: string) => {
+  const idx = Object.values(BL_CUSTOMER_ACCTS).findIndex((acct) =>
+    acct.vendorIdsToImport.includes(parseInt(vendorId))
+  )
   return idx >= 0
 }
 

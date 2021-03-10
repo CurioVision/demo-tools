@@ -46,6 +46,13 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.deleteReceivingVoucherItem,
       {}
     )
+    // fetch and delete payments
+    await fetchAllAndDelete(
+      'payment',
+      demoAccounttoken,
+      BridalLiveApi.fetchAllPayments,
+      BridalLiveApi.deletePayment
+    )
     // fetch and delete pos transactions
     await fetchAllAndDelete(
       'posTransaction',
@@ -82,13 +89,6 @@ const cleanBridalLiveDemoAccount = async (
       BridalLiveApi.deleteVendor,
       { status: '', isVendorVisibleOnLookbook: '' }
     )
-    // fetch and delete payments
-    // await fetchAllAndDelete(
-    //   'payment',
-    //   demoAccounttoken,
-    //   BridalLiveApi.fetchAllPayments,
-    //   BridalLiveApi.deletePayment
-    // )
 
     // fetch and delete contacts
     // await fetchAllAndDelete(

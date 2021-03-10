@@ -13,6 +13,7 @@ import {
   MappedBridalLiveReceivingVoucherItems,
 } from '../../../types'
 import {
+  dataIdInDemo,
   dataWasAddedToDemo,
   obfuscateBaseBridalLiveData,
   obfuscateDateAsBridalLiveString,
@@ -41,6 +42,14 @@ const obfuscateReceivingVoucher = (
   receivingVoucher: BridalLiveReceivingVoucher,
   allLineItems: MappedBridalLiveReceivingVoucherItems
 ): DataWithLineItems => {
+  // skip the receiving voucher if the vendor wasn't imported
+  if (!dataWasAddedToDemo(demoData, 'vendors', receivingVoucher.vendorId)) {
+    logInfo(
+      `...the Vendor for this Receiving Voucher was NOT created in demo data`
+    )
+    return null
+  }
+
   // find associated line items
   const lineItems: BridalLiveReceivingVoucherItem[] = Object.values(
     allLineItems
@@ -74,7 +83,11 @@ const obfuscateReceivingVoucher = (
   )
 
   // set new vendor id
-  receivingVoucher.vendorId = demoData.vendors[receivingVoucher.vendorId].newId
+  receivingVoucher.vendorId = dataIdInDemo(
+    demoData,
+    'vendors',
+    receivingVoucher.vendorId
+  )
 
   return {
     parentData: {

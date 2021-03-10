@@ -2,7 +2,7 @@
 // BridalLive types, in a single node package that app & functions can import
 
 import fetch from 'node-fetch'
-import { logDebug, logError, logSevereError } from '../../logger'
+import { logDebug, logError, logInfo, logSevereError } from '../../logger'
 import {
   BL_DEMO_ACCT_VALIDATION,
   BL_PROD_ROOT_URL,
@@ -200,6 +200,8 @@ const POS_TRANSACTIONS_ENDPOINTS = {
   allPosTransactions: '/bl-server/api/posTransactions/list?page=0',
   deletePosTransaction: '/bl-server/api/posTransactions',
   createPosTransaction: '/bl-server/api/posTransactions',
+  updatePosTransaction: '/bl-server/api/posTransactions',
+  addPaymentToPosTransaction: '/bl-server/api/posTransactions',
 }
 
 /**
@@ -221,6 +223,7 @@ const POS_TRANSACTION_ITEMS_ENDPOINTS = {
 const PAYMENTS_ENDPOINTS = {
   allPayments: '/bl-server/api/payments/list?page=0',
   deletePayment: '/bl-server/api/payments',
+  createPayment: '/bl-server/api/payments',
 }
 
 /**
@@ -1102,6 +1105,101 @@ const deletePayment = async (
   )
 }
 
+const createPayment = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  payment: BridalLivePayment
+): Promise<BridalLivePayment> => {
+  return createData<BridalLivePayment>(
+    rootUrl,
+    PAYMENTS_ENDPOINTS.createPayment,
+    token,
+    payment
+  )
+}
+
+const addPaymentToPosTransaction = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  payment: BridalLivePayment
+): Promise<BridalLivePayment> => {
+  if (!token || token === '') {
+    logError('Cannot add Payment data without a valid token', null)
+    throw new Error('Cannot add Payment data without a valid token')
+  }
+
+  const allowMutate = await allowMutation(rootUrl, token)
+  if (!allowMutate) return
+
+  logInfo('Payment payload')
+  logInfo(payment)
+
+  return safeFetch(
+    rootUrl +
+      `${POS_TRANSACTIONS_ENDPOINTS.addPaymentToPosTransaction}/${payment.transactionId}/addPayment`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payment),
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => {
+      logInfo('Response from add payment')
+      logInfo(data)
+      return data
+    })
+    .catch((error) => {
+      logError('Failed to add Payment data', error)
+      throw new Error('Failed to add Payment data')
+    })
+}
+
+const completePosTransaction = async (
+  rootUrl: BL_ROOT_URL,
+  token: BridalLiveToken,
+  posTransactionId: string | number,
+  employeeId: string | number
+): Promise<BridalLivePosTransaction> => {
+  if (!token || token === '') {
+    logError(
+      'Cannot complete a POS Transaction data without a valid token',
+      null
+    )
+    throw new Error(
+      'Cannot complete aPOS Transaction data without a valid token'
+    )
+  }
+
+  const allowMutate = await allowMutation(rootUrl, token)
+  if (!allowMutate) return
+
+  // https://qa.bridallive.com/bl-server/api/posTransactions/653346/completeTransaction/6625
+  return safeFetch(
+    rootUrl +
+      `${
+        POS_TRANSACTIONS_ENDPOINTS.updatePosTransaction
+      }/${posTransactionId.toString()}/completeTransaction/${employeeId}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        token: token,
+      },
+    }
+  )
+    .then((res) => res.json())
+    .then((data) => {
+      return data
+    })
+    .catch((error) => {
+      logError('Failed to complete POS Transaction data', error)
+      throw new Error('Failed to complete POS Transaction data')
+    })
+}
 /**
  * Fetch BridalLive contacts. Uses the contacts/list endpoint and returns the result.
  *
@@ -1401,6 +1499,9 @@ export default {
   createPosTransactionItem,
   fetchAllPayments,
   deletePayment,
+  createPayment,
+  addPaymentToPosTransaction,
+  completePosTransaction,
   fetchAllContacts,
   deleteContact,
   fetchAllVendors,

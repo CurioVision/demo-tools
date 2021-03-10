@@ -10,6 +10,7 @@ import {
   MappedBridalLivePurchaseOrderItems,
 } from '../../../types'
 import {
+  dataIdInDemo,
   dataWasAddedToDemo,
   obfuscateBaseBridalLiveData,
   obfuscateDateAsBridalLiveString,
@@ -38,6 +39,14 @@ const obfuscatePurchaseOrder = (
   purchaseOrder: BridalLivePurchaseOrder,
   allLineItems: MappedBridalLivePurchaseOrderItems
 ): DataWithLineItems => {
+  // skip the purchase order if the vendor wasn't imported
+  if (!dataWasAddedToDemo(demoData, 'vendors', purchaseOrder.vendorId)) {
+    logInfo(
+      `...the Vendor for this Purchase Order was NOT created in demo data`
+    )
+    return null
+  }
+
   // find associated line items
   const filteredLineItems: MappedBridalLivePurchaseOrderItems = {}
   Object.keys(allLineItems).forEach((poLineItemId: string) => {
@@ -80,7 +89,11 @@ const obfuscatePurchaseOrder = (
   )
 
   // set new vendor id
-  purchaseOrder.vendorId = demoData.vendors[purchaseOrder.vendorId].newId
+  purchaseOrder.vendorId = dataIdInDemo(
+    demoData,
+    'vendors',
+    purchaseOrder.vendorId
+  )
 
   return {
     parentData: {
