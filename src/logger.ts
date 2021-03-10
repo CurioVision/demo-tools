@@ -13,52 +13,69 @@ const warning = chalk.keyword('orange')
 const consoleOutputFile = new console.Console(
   fs.createWriteStream('./output.txt')
 )
-const log = (message: string, debugMessage: boolean = false) => {
-  // if it's not a debug message write to both loggers
-  if (!debugMessage) {
-    console.log(message)
-    consoleOutputFile.log(message)
-  } else {
-    // since it's a debug message, only output to console if the debug flag
-    // was enabled. note: debug messages always get written th output.txt
-    if (global[GLOBAL_DEBUG_KEY]) console.log(message)
+const logToFile = (message: string | object | null) => {
+  if (!message) return
 
-    consoleOutputFile.log(message)
-  }
+  const str =
+    typeof message === 'string' ? message : JSON.stringify(message, null, 2)
+  consoleOutputFile.log(str)
 }
 
 export const logHeader = (message: string) => {
-  log('\n')
-  log(header(message))
+  logToFile(`\n${message}`)
+
+  console.log('\n')
+  console.log(header(message))
 }
 
 export const logInfo = (message: string | object) => {
-  if (typeof message === 'string') log(info(message))
-  else log(info(JSON.stringify(message)))
+  logToFile(message)
+
+  if (typeof message === 'string') console.log(info(message))
+  else console.log(info(JSON.stringify(message, null, 2)))
 }
 
 export const logSuccess = (message: string | object) => {
-  if (typeof message === 'string') log(success(message))
-  else log(success(JSON.stringify(message)))
+  logToFile(message)
+
+  if (typeof message === 'string') console.log(success(message))
+  else console.log(success(JSON.stringify(message, null, 2)))
+}
+
+export const logWarning = (message: string | object) => {
+  logToFile(message)
+
+  if (typeof message === 'string') console.log(warning(message))
+  else console.log(warning(JSON.stringify(message, null, 2)))
 }
 
 export const logError = (message: string, errorObject: object | null) => {
-  log(error(message))
+  logToFile(message)
+  logToFile(errorObject)
+
+  console.log(error(message))
   if (errorObject) {
-    log(errorDetails(JSON.stringify(errorObject)))
+    console.log(errorDetails(JSON.stringify(errorObject, null, 2)))
   }
   if (global[GLOBAL_DEBUG_KEY]) {
     console.trace()
   }
 }
 
-export const logDebug = (message: string) => {
-  if (typeof message === 'string') log(info(message), true)
-  else log(info(JSON.stringify(message)), true)
+export const logDebug = (message: string | object) => {
+  logToFile(message)
+
+  if (global[GLOBAL_DEBUG_KEY]) {
+    if (typeof message === 'string') console.log(info(message), true)
+    else console.log(info(JSON.stringify(message, null, 2)), true)
+  }
 }
 
 export const logSevereError = (message: string, errorObject: object | null) => {
-  log(
+  logToFile(message)
+  logToFile(errorObject)
+
+  console.log(
     `${boxen(
       '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nSTOP\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!',
       {
@@ -72,9 +89,9 @@ export const logSevereError = (message: string, errorObject: object | null) => {
       }
     )}`
   )
-  log(error(message))
+  console.log(error(message))
   if (errorObject) {
-    log(errorDetails(JSON.stringify(errorObject)))
+    console.log(errorDetails(JSON.stringify(errorObject)))
   }
   if (global[GLOBAL_DEBUG_KEY]) {
     console.trace()
