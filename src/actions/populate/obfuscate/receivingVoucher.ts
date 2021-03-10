@@ -37,7 +37,7 @@ const StaticValues: Pick<
 
 const obfuscateReceivingVoucher = (
   demoData: BridalLiveDemoData,
-  originalId: string,
+  originalReceivingVoucherId: string,
   receivingVoucher: BridalLiveReceivingVoucher,
   allLineItems: MappedBridalLiveReceivingVoucherItems
 ): DataWithLineItems => {
@@ -45,8 +45,8 @@ const obfuscateReceivingVoucher = (
   const lineItems: BridalLiveReceivingVoucherItem[] = Object.values(
     allLineItems
   ).filter(
-    (poLineItem: BridalLiveReceivingVoucherItem) =>
-      poLineItem.receivingVoucherId.toString() === originalId
+    (rvLineItem: BridalLiveReceivingVoucherItem) =>
+      rvLineItem.receivingVoucherId.toString() === originalReceivingVoucherId
   )
 
   // if none of the lineItems are for gowns that were imported into the demo

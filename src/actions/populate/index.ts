@@ -4,6 +4,7 @@ import BridalLiveAPI, {
   CreateFunction,
 } from '../../integrations/BridalLive/api'
 import {
+  BridalLivePosTransactionLineItem,
   BridalLivePurchaseOrderItem,
   BridalLiveReceivingVoucherItem,
   BridalLiveToken,
@@ -18,12 +19,15 @@ import {
 import { BL_QA_ROOT_URL, CUSTOMER_DATA_FILES } from '../../settings'
 import {
   BridalLiveDemoData,
+  MappedBridalLivePosTransactionItems,
   MappedBridalLivePurchaseOrderItems,
   MappedBridalLiveReceivingVoucherItems,
 } from '../../types'
 import obfuscateItem from './obfuscate/item'
 import obfuscateItemAttribute from './obfuscate/itemAttribute'
 import obfuscateItemImage from './obfuscate/itemImage'
+import obfuscatePosTransaction from './obfuscate/posTransaction'
+import obfuscatePosTransactionLineItem from './obfuscate/posTransactionItem'
 import obfuscatePurchaseOrder from './obfuscate/purchaseOrder'
 import obfuscatePurchaseOrderLineItem from './obfuscate/purchaseOrderLineItem'
 import obfuscateReceivingVoucher from './obfuscate/receivingVoucher'
@@ -37,7 +41,7 @@ export interface DataWithLineItems {
   lineItems:
     | MappedBridalLivePurchaseOrderItems
     | MappedBridalLiveReceivingVoucherItems
-  // | BridalLivePosTransactionLineItem[]
+    | MappedBridalLivePosTransactionItems
 }
 
 type ObfuscateFunction =
@@ -49,11 +53,18 @@ type ObfuscateFunction =
 type ObfuscateWithLineItemFunction =
   | typeof obfuscatePurchaseOrder
   | typeof obfuscateReceivingVoucher
+  | typeof obfuscatePosTransaction
 
 type ObfuscateLineItemFunction = (
   demoData: BridalLiveDemoData,
-  lineItem: BridalLivePurchaseOrderItem | BridalLiveReceivingVoucherItem
-) => BridalLivePurchaseOrderItem | BridalLiveReceivingVoucherItem
+  lineItem:
+    | BridalLivePurchaseOrderItem
+    | BridalLiveReceivingVoucherItem
+    | BridalLivePosTransactionLineItem
+) =>
+  | BridalLivePurchaseOrderItem
+  | BridalLiveReceivingVoucherItem
+  | BridalLivePosTransactionLineItem
 
 const populateDemoAccount = async (demoAccounttoken: BridalLiveToken) => {
   logHeader(`Populating BridalLive Demo account`)
@@ -74,6 +85,8 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     purchaseOrderItems: {},
     receivingVouchers: {},
     receivingVoucherItems: {},
+    posTransactions: {},
+    posTransactionItems: {},
   }
   // import vendors
   demoData = await importData(
@@ -138,6 +151,20 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     obfuscateReceivingVoucherLineItem,
     BridalLiveAPI.createReceivingVoucher,
     BridalLiveAPI.createReceivingVoucherItem
+  )
+
+  // import pos transactions and pos transaction line items
+  demoData = await importDataWithLineItems(
+    demoAccountToken,
+    demoData,
+    'posTransactions',
+    'posTransactionItems',
+    CUSTOMER_DATA_FILES.posTransactions,
+    CUSTOMER_DATA_FILES.posTransactionItems,
+    obfuscatePosTransaction,
+    obfuscatePosTransactionLineItem,
+    BridalLiveAPI.createPosTransaction,
+    BridalLiveAPI.createPosTransactionItem
   )
 }
 

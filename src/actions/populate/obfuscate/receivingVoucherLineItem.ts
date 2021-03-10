@@ -40,11 +40,11 @@ const obfuscateReceivingVoucherLineItem = (
 
   logInfo(`...Line Item has corresponding Purchase Order in demo data`)
 
-  const originalGownId = lineItem.inventoryItemId
-  if (!dataWasAddedToDemo(demoData, 'items', originalGownId)) {
+  const originalItemId = lineItem.inventoryItemId
+  if (!dataWasAddedToDemo(demoData, 'items', originalItemId)) {
     logWarning(
       `...Line Item has NO corresponding Item in demo data.
-      \tORIGINAL ITEM ID: ${originalGownId},
+      \tORIGINAL ITEM ID: ${originalItemId},
       \tORIGINAL ITEM NAME: ${lineItem.itemVendorItemName}`
     )
 
@@ -63,8 +63,8 @@ const obfuscateReceivingVoucherLineItem = (
   lineItem.receivingVoucherId =
     demoData.receivingVouchers[originalReceivingVoucherId].newId
   // set new related item data using the gown that was created in the demo account
-  lineItem.inventoryItemId = demoData.items[originalGownId].newId
-  lineItem.itemNumber = demoData.items[originalGownId].cleanData.itemNumber
+  lineItem.inventoryItemId = demoData.items[originalItemId].newId
+  lineItem.itemNumber = demoData.items[originalItemId].cleanData.itemNumber
   // set new related RV and PO ids using created data in the demo account
   lineItem.purchaseOrderId =
     demoData.purchaseOrders[originalPurchaseOrderId].newId

@@ -23,11 +23,11 @@ const obfuscatePurchaseOrderLineItem = (
 
   logInfo(`...Line Item has corresponding Purchase Order in demo data`)
 
-  const originalGownId = lineItem.inventoryItemId
-  if (!dataWasAddedToDemo(demoData, 'items', originalGownId)) {
+  const originalItemId = lineItem.inventoryItemId
+  if (!dataWasAddedToDemo(demoData, 'items', originalItemId)) {
     logWarning(
       `...Line Item has NO corresponding Item in demo data.
-      \tORIGINAL ITEM ID: ${originalGownId},
+      \tORIGINAL ITEM ID: ${originalItemId},
       \tORIGINAL ITEM NAME: ${lineItem.itemVendorItemName}`
     )
     return null
@@ -41,13 +41,13 @@ const obfuscatePurchaseOrderLineItem = (
   lineItem.purchaseOrderId =
     demoData.purchaseOrders[lineItem.purchaseOrderId].newId
 
-  lineItem.itemNumber = demoData.items[originalGownId].cleanData.itemNumber
+  lineItem.itemNumber = demoData.items[originalItemId].cleanData.itemNumber
 
   // only obfuscate contact data if it was already set
   if (lineItem.contactId) lineItem.contactId = BL_DEMO_ACCT_CONTACT_ID
 
   // set new related item data using the gown that was created in the demo account
-  lineItem.inventoryItemId = demoData.items[originalGownId].newId
+  lineItem.inventoryItemId = demoData.items[originalItemId].newId
 
   return {
     ...lineItem,

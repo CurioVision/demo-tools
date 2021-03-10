@@ -34,16 +34,16 @@ const StaticValues: Pick<
 
 const obfuscatePurchaseOrder = (
   demoData: BridalLiveDemoData,
-  originalId: string,
+  originalPurchaseOrderId: string,
   purchaseOrder: BridalLivePurchaseOrder,
   allLineItems: MappedBridalLivePurchaseOrderItems
 ): DataWithLineItems => {
   // find associated line items
   const filteredLineItems: MappedBridalLivePurchaseOrderItems = {}
   Object.keys(allLineItems).forEach((poLineItemId: string) => {
-    const po = allLineItems[poLineItemId]
-    if (po.purchaseOrderId.toString() === originalId) {
-      filteredLineItems[poLineItemId] = po
+    const lineItem = allLineItems[poLineItemId]
+    if (lineItem.purchaseOrderId.toString() === originalPurchaseOrderId) {
+      filteredLineItems[poLineItemId] = lineItem
     }
   })
 

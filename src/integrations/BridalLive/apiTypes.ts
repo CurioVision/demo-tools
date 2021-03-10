@@ -467,7 +467,7 @@ export interface BridalLivePosTransactionLineItem extends BaseBridalLiveObject {
   itemColor2: string //Silver';
   itemSize: string //16';
   eventItemId: null
-  purchaseOrderItemId: null
+  purchaseOrderItemId: number | null
   sizeUpchargeApplied: null
   itemStatus: null
   commissionDisabled: null
@@ -560,7 +560,7 @@ export interface BridalLivePosTransaction extends BaseBridalLiveObject {
   contactName: string | null //Matt Gabor';
   contactPhone: string //4015551212';
   contactPhoneType: number //3;
-  eventDate: null
+  eventDate: string | null
   smartFlowsTriggeredDateTime: null
   smartFlowsProcessedDateTime: null
   qbTxnId: null
