@@ -3,8 +3,12 @@ import { logInfo } from '../../../logger'
 import { BridalLiveDemoData } from '../../../types'
 import { obfuscateBaseBridalLiveData } from './utils'
 
-const StaticValues: Pick<BridalLiveVendor, 'marketplaceId'> = {
+const StaticValues: Pick<
+  BridalLiveVendor,
+  'marketplaceId' | 'accountNumber'
+> = {
   marketplaceId: null,
+  accountNumber: null,
 }
 
 const obfuscateVendor = (

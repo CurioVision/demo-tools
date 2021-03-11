@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { logDebug } from '../../../logger'
-import { BL_CUSTOMER_ACCTS } from '../../../settings'
+import { BL_CUSTOMER_ACCTS, VALID_CUSTOMERS } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 
 /**
@@ -94,11 +94,18 @@ export const isCustomerGownDepartmentId = (deptId: number) => {
   return idx >= 0
 }
 
-export const shouldImportCustomerVendor = (vendorId: string) => {
-  const idx = Object.values(BL_CUSTOMER_ACCTS).findIndex((acct) =>
-    acct.vendorIdsToImport.includes(parseInt(vendorId))
+export const shouldImportCustomerVendor = (
+  customer: VALID_CUSTOMERS,
+  vendorToImport: number | 'all',
+  vendorId: string
+) => {
+  if (vendorToImport !== 'all' && vendorToImport.toString() !== vendorId) {
+    return false
+  }
+
+  return BL_CUSTOMER_ACCTS[customer].vendorIdsToImport.includes(
+    parseInt(vendorId)
   )
-  return idx >= 0
 }
 
 export const dataWasAddedToDemo = (

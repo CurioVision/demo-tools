@@ -4,12 +4,13 @@ import clean from './actions/clean'
 import fetchCustomerData from './actions/fetchCustomerData'
 import populate from './actions/populate'
 import BridalLiveAPI from './integrations/BridalLive/api'
-import { logError } from './logger'
+import { logError, logSevereError } from './logger'
 import {
   BL_DEMO_ACCT_API_KEY,
   BL_DEMO_ACCT_RETAILER_ID,
   BL_QA_ROOT_URL,
   GLOBAL_DEBUG_KEY,
+  VALID_CUSTOMERS,
 } from './settings'
 
 const TITLE =
@@ -65,11 +66,17 @@ export const cleanDemoAccount = async () => {
   if (demoAccountToken) await clean(demoAccountToken)
 }
 
-export const populateDemoAccount = async () => {
+export const populateDemoAccount = async (
+  customer: VALID_CUSTOMERS | 'all',
+  vendor: number | 'all'
+) => {
   await authenticateDemoAccount()
-  if (demoAccountToken) await populate(demoAccountToken)
+  if (demoAccountToken) await populate(demoAccountToken, customer, vendor)
 }
 
-export const fetch = async () => {
-  await fetchCustomerData()
+export const fetch = async (customer: VALID_CUSTOMERS | 'all') => {
+  if (customer === 'all') {
+    logSevereError('Fetch ALL customers not yet implemented', {})
+  }
+  await fetchCustomerData(customer as VALID_CUSTOMERS)
 }

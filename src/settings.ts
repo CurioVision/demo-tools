@@ -60,6 +60,9 @@ export const BL_CUSTOMER_ACCTS = {
     vendorIdsToImport: [
       40495, // Stella
       39541, // Essense of Australia
+      42335, // Eddy K
+      39736, // Blush by Hayley Paige
+      40050, // Kelly Faetanini
     ],
   },
   customer2: {
@@ -73,20 +76,39 @@ export const BL_CUSTOMER_ACCTS = {
       88573, // Colby John
     ],
   },
+  customer3: {
+    retailerName: 'Vanessa Dineen',
+    retailerId: '726804d6',
+    apiKey: 'b87c0ff4b4558987',
+    gownDeptId: 25897,
+    vendorIdsToImport: [],
+  },
 }
 
+export type VALID_CUSTOMERS = keyof typeof BL_CUSTOMER_ACCTS
 export const CUSTOMER_DATA_DIR = './data'
 
 export const CUSTOMER_DATA_FILES = {
-  vendors: `${CUSTOMER_DATA_DIR}/vendors.json`,
-  items: `${CUSTOMER_DATA_DIR}/items.json`,
-  itemImages: `${CUSTOMER_DATA_DIR}/itemImages.json`,
-  attributes: `${CUSTOMER_DATA_DIR}/attributes.json`,
-  purchaseOrders: `${CUSTOMER_DATA_DIR}/purchaseOrders.json`,
-  purchaseOrderItems: `${CUSTOMER_DATA_DIR}/purchaseOrderItems.json`,
-  receivingVouchers: `${CUSTOMER_DATA_DIR}/receivingVouchers.json`,
-  receivingVoucherItems: `${CUSTOMER_DATA_DIR}/receivingVoucherItems.json`,
-  posTransactions: `${CUSTOMER_DATA_DIR}/posTransactions.json`,
-  posTransactionItems: `${CUSTOMER_DATA_DIR}/posTransactionItems.json`,
-  payments: `${CUSTOMER_DATA_DIR}/payments.json`,
+  vendors: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/vendors.json`,
+  items: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/items.json`,
+  itemImages: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/itemImages.json`,
+  attributes: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/attributes.json`,
+  purchaseOrders: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/purchaseOrders.json`,
+  purchaseOrderItems: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/purchaseOrderItems.json`,
+  receivingVouchers: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/receivingVouchers.json`,
+  receivingVoucherItems: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/receivingVoucherItems.json`,
+  posTransactions: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/posTransactions.json`,
+  posTransactionItems: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/posTransactionItems.json`,
+  payments: (customer: VALID_CUSTOMERS) =>
+    `${CUSTOMER_DATA_DIR}/${customer}/payments.json`,
 }

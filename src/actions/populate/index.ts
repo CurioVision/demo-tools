@@ -15,18 +15,26 @@ import {
   logError,
   logHeader,
   logInfo,
+  logSevereError,
   logSuccess,
 } from '../../logger'
 import {
   BL_DEMO_ACCT_EMPLOYEE_ID,
   BL_QA_ROOT_URL,
   CUSTOMER_DATA_FILES,
+  VALID_CUSTOMERS,
 } from '../../settings'
 import {
   BridalLiveDemoData,
+  MappedBridalLiveAttributes,
+  MappedBridalLiveItemImages,
+  MappedBridalLiveItems,
+  MappedBridalLivePayments,
   MappedBridalLivePosTransactionItems,
+  MappedBridalLivePosTransactions,
   MappedBridalLivePurchaseOrderItems,
   MappedBridalLiveReceivingVoucherItems,
+  MappedBridalLiveVendors,
 } from '../../types'
 import obfuscateItem from './obfuscate/item'
 import obfuscateItemAttribute from './obfuscate/itemAttribute'
@@ -77,16 +85,33 @@ type ObfuscateLineItemFunction = (
   | BridalLiveReceivingVoucherItem
   | BridalLivePosTransactionLineItem
 
-const populateDemoAccount = async (demoAccounttoken: BridalLiveToken) => {
-  logHeader(`Populating BridalLive Demo account`)
+const populateDemoAccount = async (
+  demoAccounttoken: BridalLiveToken,
+  customer: VALID_CUSTOMERS | 'all',
+  vendor: number | 'all'
+) => {
+  logHeader(`Populating BridalLive Demo account using:
+  \tCUSTOMER: ${customer}
+  \tVENDOR: ${vendor}`)
+
   try {
-    importCustomerData(demoAccounttoken)
+    importCustomerData(demoAccounttoken, customer, vendor)
   } catch (error) {
     logError('Error occurred while populating BridalLive demo account', error)
   }
 }
 
-const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
+const importCustomerData = async (
+  demoAccountToken: BridalLiveToken,
+  customer: VALID_CUSTOMERS | 'all',
+  vendorToImport: number | 'all'
+) => {
+  if (customer === 'all') {
+    logSevereError('Importing all customers not implemented yet', {})
+    return
+  }
+
+  const importCustomer = customer as VALID_CUSTOMERS
   let demoData: BridalLiveDemoData = {
     items: {},
     vendors: {},
@@ -101,82 +126,158 @@ const importCustomerData = async (demoAccountToken: BridalLiveToken) => {
     payments: {},
   }
   // import vendors
+  const mappedCustomerVendors = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.vendors(importCustomer)
+  )
+  // filter vendors by the specified vendor ID. Since Items check for an imported
+  // vendor and all other types check for an imported Item before importing,
+  // controlling the vendor is enough to limit what gets imported
+  const vendorIds = Object.keys(mappedCustomerVendors)
+  logInfo(`${customer} has ${vendorIds.length} total vendors`)
+
+  logInfo(`Filtering vendors to import`)
+
+  let filteredVendorMap: MappedBridalLiveVendors = {}
+  for await (const id of vendorIds) {
+    const vendor = mappedCustomerVendors[id]
+
+    // only import specified vendors. since
+    if (!shouldImportCustomerVendor(customer, vendorToImport, id)) {
+      logInfo(
+        `Skipping Vendor import because it is NOT included in import settings. 
+        \tVendor Name: ${vendor.name}
+        \tVendor ID: ${id}`
+      )
+    } else {
+      logInfo(
+        `Vendor will be imported because it IS included in import settings. 
+        \tVendor Name: ${vendor.name}
+        \tVendor ID: ${id}`
+      )
+      filteredVendorMap[id] = vendor
+    }
+  }
+  logInfo(`${
+    Object.keys(filteredVendorMap).length
+  } total vendors will be imported:
+  \t${Object.keys(filteredVendorMap)}`)
+
   demoData = await importData(
     demoAccountToken,
     demoData,
     'vendors',
-    CUSTOMER_DATA_FILES.vendors,
+    filteredVendorMap,
     obfuscateVendor,
     BridalLiveAPI.createVendor
   )
-  // import gowns
+  // import items
+  const mappedCustomerItems = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.items(importCustomer)
+  )
   demoData = await importData(
     demoAccountToken,
     demoData,
     'items',
-    CUSTOMER_DATA_FILES.items,
+    mappedCustomerItems,
     obfuscateItem,
     BridalLiveAPI.createItem
   )
   // import item images
+  const mappedCustomerItemImages = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.itemImages(importCustomer)
+  )
   demoData = await importData(
     demoAccountToken,
     demoData,
     'itemImages',
-    CUSTOMER_DATA_FILES.itemImages,
+    mappedCustomerItemImages,
     obfuscateItemImage,
     BridalLiveAPI.createItemImage
   )
   // import item attributes
+  const mappedCustomerAttributes = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.attributes(importCustomer)
+  )
   demoData = await importData(
     demoAccountToken,
     demoData,
     'attributes',
-    CUSTOMER_DATA_FILES.attributes,
+    mappedCustomerAttributes,
     obfuscateItemAttribute,
     BridalLiveAPI.createAttribute
   )
   // import purchase orders and purchase order line items
+  const mappedCustomerPurchaseOrderData = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.purchaseOrders(customer as VALID_CUSTOMERS)
+  )
+  const mappedCustomerPurchaseOrderLineItemData = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.purchaseOrderItems(customer as VALID_CUSTOMERS)
+  )
   demoData = await importDataWithLineItems(
     demoAccountToken,
     demoData,
     'purchaseOrders',
     'purchaseOrderItems',
-    CUSTOMER_DATA_FILES.purchaseOrders,
-    CUSTOMER_DATA_FILES.purchaseOrderItems,
+    mappedCustomerPurchaseOrderData,
+    mappedCustomerPurchaseOrderLineItemData,
     obfuscatePurchaseOrder,
     obfuscatePurchaseOrderLineItem,
     BridalLiveAPI.createPurchaseOrder,
     BridalLiveAPI.createPurchaseOrderItem
   )
   // import receiving vouchers and receiving voucher line items
+  const mappedCustomerReceivingVoucherData = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.receivingVouchers(customer as VALID_CUSTOMERS)
+  )
+  const mappedCustomerReceivingVoucherLineItemData = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.receivingVoucherItems(customer as VALID_CUSTOMERS)
+  )
   demoData = await importDataWithLineItems(
     demoAccountToken,
     demoData,
     'receivingVouchers',
     'receivingVoucherItems',
-    CUSTOMER_DATA_FILES.receivingVouchers,
-    CUSTOMER_DATA_FILES.receivingVoucherItems,
+    mappedCustomerReceivingVoucherData,
+    mappedCustomerReceivingVoucherLineItemData,
     obfuscateReceivingVoucher,
     obfuscateReceivingVoucherLineItem,
     BridalLiveAPI.createReceivingVoucher,
     BridalLiveAPI.createReceivingVoucherItem
   )
   // import pos transactions and pos transaction line items
+  const mappedCustomerPosTransactionData = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.posTransactions(customer as VALID_CUSTOMERS)
+  )
+  const mappedCustomerPosTransactionLineItemData = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.posTransactionItems(customer as VALID_CUSTOMERS)
+  )
   demoData = await importDataWithLineItems(
     demoAccountToken,
     demoData,
     'posTransactions',
     'posTransactionItems',
-    CUSTOMER_DATA_FILES.posTransactions,
-    CUSTOMER_DATA_FILES.posTransactionItems,
+    mappedCustomerPosTransactionData,
+    mappedCustomerPosTransactionLineItemData,
     obfuscatePosTransaction,
     obfuscatePosTransactionLineItem,
     BridalLiveAPI.createPosTransaction,
     BridalLiveAPI.createPosTransactionItem
   )
   // import payments
-  demoData = await importPayments(demoAccountToken, demoData)
+  const mappedCustomerPayments = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.payments(customer as VALID_CUSTOMERS)
+  )
+
+  const mappedCustomerTransactions = await _readCustomerDataFile(
+    CUSTOMER_DATA_FILES.posTransactions(customer as VALID_CUSTOMERS)
+  )
+
+  demoData = await importPayments(
+    demoAccountToken,
+    demoData,
+    mappedCustomerPayments,
+    mappedCustomerTransactions
+  )
 }
 
 /**
@@ -194,11 +295,15 @@ const importData = async (
   demoAccountToken: BridalLiveToken,
   demoData: BridalLiveDemoData,
   type: keyof BridalLiveDemoData,
-  dataFilename: string,
+  mappedCustomerData:
+    | MappedBridalLiveVendors
+    | MappedBridalLiveItems
+    | MappedBridalLiveAttributes
+    | MappedBridalLiveItemImages,
   obfuscateFn: ObfuscateFunction,
   createFn: CreateFunction
 ) => {
-  const mappedCustomerData = await _readCustomerDataFile(dataFilename)
+  // const mappedCustomerData = await _readCustomerDataFile(dataFilename)
   const originalIds = Object.keys(mappedCustomerData)
   logInfo(`Importing ${originalIds.length} ${type}`)
 
@@ -206,51 +311,51 @@ const importData = async (
     let data = mappedCustomerData[id]
 
     // only import specified vendors. since
-    if (type === 'vendors' && !shouldImportCustomerVendor(id)) {
-      logInfo(
-        `Skipping Vendor import because it is not included in import settings. 
-        \tVendor Name: ${data.name}
-        \tVendor ID: ${id}`
-      )
-      continue
-    } else {
-      logInfo(
-        `Preparing to import ${pluralize.singular(type)} : ${
-          data.hasOwnProperty('name') && data.name ? data.name : id
-        }`
-      )
+    // if (type === 'vendors' && !shouldImportCustomerVendor(id)) {
+    //   logInfo(
+    //     `Skipping Vendor import because it is not included in import settings.
+    //     \tVendor Name: ${data.name}
+    //     \tVendor ID: ${id}`
+    //   )
+    //   continue
+    // } else {
+    logInfo(
+      `Preparing to import ${pluralize.singular(type)} : ${
+        data.hasOwnProperty('name') && data.name ? data.name : id
+      }`
+    )
 
-      data = obfuscateFn(demoData, data)
-      if (data) {
-        try {
-          const createdData = await createFn(
-            BL_QA_ROOT_URL,
-            demoAccountToken,
-            data
+    data = obfuscateFn(demoData, data)
+    if (data) {
+      try {
+        const createdData = await createFn(
+          BL_QA_ROOT_URL,
+          demoAccountToken,
+          data
+        )
+        if (createdData) {
+          logSuccess(
+            `...created ${pluralize.singular(type)}: \n\tDEMO DATA ID = ${
+              createdData.id
+            }, \n\tORIGINAL ID = ${id}, \n\tNAME = ${
+              createdData.hasOwnProperty('name')
+                ? createdData['name']
+                : 'Data type has no name'
+            }`
           )
-          if (createdData) {
-            logSuccess(
-              `...created ${pluralize.singular(type)}: \n\tDEMO DATA ID = ${
-                createdData.id
-              }, \n\tORIGINAL ID = ${id}, \n\tNAME = ${
-                createdData.hasOwnProperty('name')
-                  ? createdData['name']
-                  : 'Data type has no name'
-              }`
-            )
-            const data = {
-              newId: createdData.id,
-              cleanData: createdData,
-            }
-            demoData[type][id] = data
+          const data = {
+            newId: createdData.id,
+            cleanData: createdData,
           }
-        } catch (error) {
-          logError('Error while creating demo date', error)
+          demoData[type][id] = data
         }
-      } else {
-        logInfo(`...skipped import of ${pluralize.singular(type)}`)
+      } catch (error) {
+        logError('Error while creating demo date', error)
       }
+    } else {
+      logInfo(`...skipped import of ${pluralize.singular(type)}`)
     }
+    // }
   }
   return demoData
 }
@@ -271,17 +376,19 @@ const importDataWithLineItems = async (
   demoData: BridalLiveDemoData,
   type: keyof BridalLiveDemoData,
   lineItemType: keyof BridalLiveDemoData,
-  dataFilename: string,
-  lineItemDataFilename: string,
+  mappedCustomerData: any,
+  mappedCustomerLineItemData: any,
+  // dataFilename: string,
+  // lineItemDataFilename: string,
   obfuscateFn: ObfuscateWithLineItemFunction,
   obfuscateLineItemFn: ObfuscateLineItemFunction,
   createFn: CreateFunction,
   createLineItemFn: CreateFunction
 ) => {
-  const mappedCustomerData = await _readCustomerDataFile(dataFilename)
-  const mappedCustomerLineItemData = await _readCustomerDataFile(
-    lineItemDataFilename
-  )
+  // const mappedCustomerData = await _readCustomerDataFile(dataFilename)
+  // const mappedCustomerLineItemData = await _readCustomerDataFile(
+  //   lineItemDataFilename
+  // )
 
   const originalIds = Object.keys(mappedCustomerData)
   logInfo(`Importing ${originalIds.length} ${type}`)
@@ -394,16 +501,10 @@ const importDataWithLineItems = async (
  */
 const importPayments = async (
   demoAccountToken: BridalLiveToken,
-  demoData: BridalLiveDemoData
+  demoData: BridalLiveDemoData,
+  mappedCustomerPayments: MappedBridalLivePayments,
+  mappedCustomerTransactions: MappedBridalLivePosTransactions
 ) => {
-  const mappedCustomerPayments = await _readCustomerDataFile(
-    CUSTOMER_DATA_FILES.payments
-  )
-
-  const mappedCustomerTransactions = await _readCustomerDataFile(
-    CUSTOMER_DATA_FILES.posTransactions
-  )
-
   const originalIds = Object.keys(mappedCustomerPayments)
   logInfo(`Importing ${originalIds.length} payments`)
 

@@ -12,48 +12,61 @@ import {
   BL_CUSTOMER_ACCTS,
   BL_PROD_ROOT_URL,
   CUSTOMER_DATA_FILES,
+  VALID_CUSTOMERS,
 } from '../settings'
 import { BridalLiveCustomerData } from '../types'
 
-const fetchCustomerData = async () => {
+const fetchCustomerData = async (customer: VALID_CUSTOMERS) => {
   try {
     const customerToken = await authenticateCustomerAccount(
-      BL_CUSTOMER_ACCTS[0]
+      BL_CUSTOMER_ACCTS[customer]
     )
     if (customerToken) {
       const customerData = await fetchAllDataFromCustomer(
         customerToken,
-        BL_CUSTOMER_ACCTS[0].gownDeptId
+        BL_CUSTOMER_ACCTS[customer].gownDeptId
       )
-      _writeDataFile(CUSTOMER_DATA_FILES.vendors, customerData.vendors)
-      _writeDataFile(CUSTOMER_DATA_FILES.items, customerData.items)
-      _writeDataFile(CUSTOMER_DATA_FILES.itemImages, customerData.itemImages)
-      _writeDataFile(CUSTOMER_DATA_FILES.attributes, customerData.attributes)
       _writeDataFile(
-        CUSTOMER_DATA_FILES.purchaseOrders,
+        CUSTOMER_DATA_FILES.vendors(customer),
+        customerData.vendors
+      )
+      _writeDataFile(CUSTOMER_DATA_FILES.items(customer), customerData.items)
+      _writeDataFile(
+        CUSTOMER_DATA_FILES.itemImages(customer),
+        customerData.itemImages
+      )
+      _writeDataFile(
+        CUSTOMER_DATA_FILES.attributes(customer),
+        customerData.attributes
+      )
+      _writeDataFile(
+        CUSTOMER_DATA_FILES.purchaseOrders(customer),
         customerData.purchaseOrders
       )
       _writeDataFile(
-        CUSTOMER_DATA_FILES.purchaseOrderItems,
+        CUSTOMER_DATA_FILES.purchaseOrderItems(customer),
         customerData.purchaseOrderItems
       )
       _writeDataFile(
-        CUSTOMER_DATA_FILES.receivingVouchers,
+        CUSTOMER_DATA_FILES.receivingVouchers(customer),
         customerData.receivingVouchers
       )
       _writeDataFile(
-        CUSTOMER_DATA_FILES.receivingVoucherItems,
+        CUSTOMER_DATA_FILES.receivingVoucherItems(customer),
         customerData.receivingVoucherItems
       )
       _writeDataFile(
-        CUSTOMER_DATA_FILES.posTransactions,
+        CUSTOMER_DATA_FILES.posTransactions(customer),
         customerData.posTransactions
       )
       _writeDataFile(
-        CUSTOMER_DATA_FILES.posTransactionItems,
+        CUSTOMER_DATA_FILES.posTransactionItems(customer),
         customerData.posTransactionItems
       )
-      _writeDataFile(CUSTOMER_DATA_FILES.payments, customerData.payments)
+      _writeDataFile(
+        CUSTOMER_DATA_FILES.payments(customer),
+        customerData.payments
+      )
 
       logSuccess('Wrote customer data files')
     }

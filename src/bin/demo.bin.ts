@@ -34,7 +34,7 @@ program
   .action(async ({ parent }) => {
     setGlobalDebug(parent.debug)
     await cleanDemoAccount()
-    await populateDemoAccount()
+    await populateDemoAccount('all', 'all')
   })
 program
   .command('clean')
@@ -50,9 +50,17 @@ program
   .description(
     `Populates the demo BridalLive account (QA) using customer data json files in ${CUSTOMER_DATA_DIR}`
   )
-  .action(({ parent }) => {
+  .option(
+    '-c --customer <string>',
+    'Specifies the customer data to populate: customer1, customer2, or customer3'
+  )
+  .option(
+    '-v --vendor <string>',
+    'Specifies the vendor ID to populate. See settings.ts for valid vendor IDs for each customer'
+  )
+  .action(({ parent, customer, vendor }) => {
     setGlobalDebug(parent.debug)
-    populateDemoAccount()
+    populateDemoAccount(customer, vendor)
   })
 program
   .command('josh')
@@ -69,14 +77,18 @@ program
   .description(
     'Fetches customer data from BridalLive (PROD) and writes it to JSON files. NOTE: All interactions with customer BridalLive accounts are READ-ONLY. No data will be updated in their accounts.'
   )
-  .action(({ parent }) => {
+  .option(
+    '-c --customer <string>',
+    'Specifies the customer data to fetch: customer1, customer2, or customer3'
+  )
+  .action(({ parent, customer }) => {
     // Set this as a customer action so non-mutating API calls are allowed
     // against the PROD BridalLive environment
     // NO OTHER COMMANDS SHOULD RUN AS CUSTOMER ACTIONS
     global[GLOBAL_IS_CUSTOMER_ACTION_KEY] = true
 
     setGlobalDebug(parent.debug)
-    fetch()
+    fetch(customer)
   })
 
 program.parse(process.argv)
