@@ -21,34 +21,46 @@ const setGlobalDebug = (debug) => {
 program
   .version(packgeJSON.version)
   .option('-d --debug', 'Output additional debugging info')
-  .option(
-    '-w --write <string>',
-    'Specifies the path of the file the order will be written to'
-  )
 
 program
   .command('all')
   .description(
     'Runs all commands that update the demo BridalLive account (QA) in the proper order. NOTE: The "fetch" command is not run; it must be explicitly executed as a safety measure, since it connects to the PROD BridalLive environment.'
   )
-  .action(async ({ parent }) => {
+  .option(
+    '-da --demoAccount <string>',
+    'The demo account that should be cleaned or populated. See settings.ts for valid demo accounts.'
+  )
+  .action(async ({ parent, demoAccount }) => {
     setGlobalDebug(parent.debug)
-    await cleanDemoAccount()
-    await populateDemoAccount('all', 'all')
+    await cleanDemoAccount(demoAccount, 'all')
+    await populateDemoAccount(demoAccount, 'all', 'all')
   })
 program
   .command('clean')
   .description(
     'Cleans up the demo BridalLive account (QA) by removing all exisiting data'
   )
-  .action(({ parent }) => {
+  .option(
+    '-da --demoAccount <string>',
+    'The demo account that should be cleaned or populated. See settings.ts for valid demo accounts.'
+  )
+  .option(
+    '-v --vendor <string>',
+    'Specifies the vendor ID to clean from the demo account. Use "all" to clean the entire demo environment.'
+  )
+  .action(({ parent, demoAccount, vendor }) => {
     setGlobalDebug(parent.debug)
-    cleanDemoAccount()
+    cleanDemoAccount(demoAccount, vendor)
   })
 program
   .command('populate')
   .description(
     `Populates the demo BridalLive account (QA) using customer data json files in ${CUSTOMER_DATA_DIR}`
+  )
+  .option(
+    '-da --demoAccount <string>',
+    'The demo account that should be cleaned or populated. See settings.ts for valid demo accounts.'
   )
   .option(
     '-c --customer <string>',
@@ -58,9 +70,9 @@ program
     '-v --vendor <string>',
     'Specifies the vendor ID to populate. See settings.ts for valid vendor IDs for each customer'
   )
-  .action(({ parent, customer, vendor }) => {
+  .action(({ parent, demoAccount, customer, vendor }) => {
     setGlobalDebug(parent.debug)
-    populateDemoAccount(customer, vendor)
+    populateDemoAccount(demoAccount, customer, vendor)
   })
 program
   .command('josh')

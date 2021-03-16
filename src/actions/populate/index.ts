@@ -19,9 +19,9 @@ import {
   logSuccess,
 } from '../../logger'
 import {
-  BL_DEMO_ACCT_EMPLOYEE_ID,
   BL_QA_ROOT_URL,
   CUSTOMER_DATA_FILES,
+  DemoAccountSettings,
   VALID_CUSTOMERS,
 } from '../../settings'
 import {
@@ -76,6 +76,7 @@ type ObfuscateWithLineItemFunction =
 
 type ObfuscateLineItemFunction = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   lineItem:
     | BridalLivePurchaseOrderItem
     | BridalLiveReceivingVoucherItem
@@ -87,6 +88,7 @@ type ObfuscateLineItemFunction = (
 
 const populateDemoAccount = async (
   demoAccounttoken: BridalLiveToken,
+  demoSettings: DemoAccountSettings,
   customer: VALID_CUSTOMERS | 'all',
   vendor: number | 'all'
 ) => {
@@ -95,7 +97,7 @@ const populateDemoAccount = async (
   \tVENDOR: ${vendor}`)
 
   try {
-    importCustomerData(demoAccounttoken, customer, vendor)
+    importCustomerData(demoAccounttoken, demoSettings, customer, vendor)
   } catch (error) {
     logError('Error occurred while populating BridalLive demo account', error)
   }
@@ -103,6 +105,7 @@ const populateDemoAccount = async (
 
 const importCustomerData = async (
   demoAccountToken: BridalLiveToken,
+  demoSettings: DemoAccountSettings,
   customer: VALID_CUSTOMERS | 'all',
   vendorToImport: number | 'all'
 ) => {
@@ -164,6 +167,7 @@ const importCustomerData = async (
 
   demoData = await importData(
     demoAccountToken,
+    demoSettings,
     demoData,
     'vendors',
     filteredVendorMap,
@@ -176,6 +180,7 @@ const importCustomerData = async (
   )
   demoData = await importData(
     demoAccountToken,
+    demoSettings,
     demoData,
     'items',
     mappedCustomerItems,
@@ -188,6 +193,7 @@ const importCustomerData = async (
   )
   demoData = await importData(
     demoAccountToken,
+    demoSettings,
     demoData,
     'itemImages',
     mappedCustomerItemImages,
@@ -200,6 +206,7 @@ const importCustomerData = async (
   )
   demoData = await importData(
     demoAccountToken,
+    demoSettings,
     demoData,
     'attributes',
     mappedCustomerAttributes,
@@ -215,6 +222,7 @@ const importCustomerData = async (
   )
   demoData = await importDataWithLineItems(
     demoAccountToken,
+    demoSettings,
     demoData,
     'purchaseOrders',
     'purchaseOrderItems',
@@ -234,6 +242,7 @@ const importCustomerData = async (
   )
   demoData = await importDataWithLineItems(
     demoAccountToken,
+    demoSettings,
     demoData,
     'receivingVouchers',
     'receivingVoucherItems',
@@ -253,6 +262,7 @@ const importCustomerData = async (
   )
   demoData = await importDataWithLineItems(
     demoAccountToken,
+    demoSettings,
     demoData,
     'posTransactions',
     'posTransactionItems',
@@ -274,6 +284,7 @@ const importCustomerData = async (
 
   demoData = await importPayments(
     demoAccountToken,
+    demoSettings,
     demoData,
     mappedCustomerPayments,
     mappedCustomerTransactions
@@ -293,6 +304,7 @@ const importCustomerData = async (
  */
 const importData = async (
   demoAccountToken: BridalLiveToken,
+  demoSettings: DemoAccountSettings,
   demoData: BridalLiveDemoData,
   type: keyof BridalLiveDemoData,
   mappedCustomerData:
@@ -325,7 +337,7 @@ const importData = async (
       }`
     )
 
-    data = obfuscateFn(demoData, data)
+    data = obfuscateFn(demoData, demoSettings, data)
     if (data) {
       try {
         const createdData = await createFn(
@@ -373,6 +385,7 @@ const importData = async (
  */
 const importDataWithLineItems = async (
   demoAccountToken: BridalLiveToken,
+  demoSettings: DemoAccountSettings,
   demoData: BridalLiveDemoData,
   type: keyof BridalLiveDemoData,
   lineItemType: keyof BridalLiveDemoData,
@@ -403,6 +416,7 @@ const importDataWithLineItems = async (
 
     const dataWithLineItems: DataWithLineItems = obfuscateFn(
       demoData,
+      demoSettings,
       id,
       data,
       mappedCustomerLineItemData
@@ -441,7 +455,11 @@ const importDataWithLineItems = async (
                   : lineItem.id
               }`
             )
-            const cleanedLineItem = obfuscateLineItemFn(demoData, lineItem)
+            const cleanedLineItem = obfuscateLineItemFn(
+              demoData,
+              demoSettings,
+              lineItem
+            )
             logDebug('back from obfuscate function')
             if (cleanedLineItem) {
               logDebug('have a valid cleaned item')
@@ -501,6 +519,7 @@ const importDataWithLineItems = async (
  */
 const importPayments = async (
   demoAccountToken: BridalLiveToken,
+  demoSettings: DemoAccountSettings,
   demoData: BridalLiveDemoData,
   mappedCustomerPayments: MappedBridalLivePayments,
   mappedCustomerTransactions: MappedBridalLivePosTransactions
@@ -514,6 +533,7 @@ const importPayments = async (
 
     let obfuscatedPayment: BridalLivePaymentObfuscationData = obfuscatePayment(
       demoData,
+      demoSettings,
       paymentData
     )
     if (obfuscatedPayment) {
@@ -555,7 +575,7 @@ const importPayments = async (
                 BL_QA_ROOT_URL,
                 demoAccountToken,
                 updatedPosTransaction.id,
-                BL_DEMO_ACCT_EMPLOYEE_ID
+                demoSettings.employeeId
               )
               if (completedTrx) {
                 logSuccess(

@@ -1,6 +1,6 @@
 import { BridalLivePurchaseOrderItem } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo, logWarning } from '../../../logger'
-import { BL_DEMO_ACCT_CONTACT_ID } from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import { dataWasAddedToDemo, obfuscateBaseBridalLiveData } from './utils'
 
@@ -8,6 +8,7 @@ const StaticValues = {}
 
 const obfuscatePurchaseOrderLineItem = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   lineItem: BridalLivePurchaseOrderItem
 ) => {
   // if no purchase order was imported into the demo account, return null so
@@ -44,7 +45,7 @@ const obfuscatePurchaseOrderLineItem = (
   lineItem.itemNumber = demoData.items[originalItemId].cleanData.itemNumber
 
   // only obfuscate contact data if it was already set
-  if (lineItem.contactId) lineItem.contactId = BL_DEMO_ACCT_CONTACT_ID
+  if (lineItem.contactId) lineItem.contactId = demoSettings.contactId
 
   // set new related item data using the gown that was created in the demo account
   lineItem.inventoryItemId = demoData.items[originalItemId].newId

@@ -1,5 +1,6 @@
 import { BridalLiveVendor } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
+import { DemoAccountSettings } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import { obfuscateBaseBridalLiveData } from './utils'
 
@@ -13,6 +14,7 @@ const StaticValues: Pick<
 
 const obfuscateVendor = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   vendor: BridalLiveVendor
 ) => {
   // replace any identifying values

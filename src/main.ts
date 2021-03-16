@@ -1,16 +1,17 @@
 import boxen from 'boxen'
 import chalk from 'chalk'
-import clean from './actions/clean'
+import clean from './actions/clean2'
 import fetchCustomerData from './actions/fetchCustomerData'
 import populate from './actions/populate'
 import BridalLiveAPI from './integrations/BridalLive/api'
 import { logError, logSevereError } from './logger'
 import {
-  BL_DEMO_ACCT_API_KEY,
-  BL_DEMO_ACCT_RETAILER_ID,
+  BL_DEMO_ACCTS,
   BL_QA_ROOT_URL,
+  DemoAccountSettings,
   GLOBAL_DEBUG_KEY,
   VALID_CUSTOMERS,
+  VALID_DEMO_ACCOUNTS,
 } from './settings'
 
 const TITLE =
@@ -21,7 +22,9 @@ const TITLE =
 
 let demoAccountToken = undefined
 
-export const authenticateDemoAccount = async () => {
+export const authenticateDemoAccount = async (
+  demoSettings: DemoAccountSettings
+) => {
   if (demoAccountToken !== undefined) return
 
   console.log(TITLE)
@@ -29,8 +32,8 @@ export const authenticateDemoAccount = async () => {
   try {
     const _token = await BridalLiveAPI.authenticate(
       BL_QA_ROOT_URL,
-      BL_DEMO_ACCT_RETAILER_ID,
-      BL_DEMO_ACCT_API_KEY
+      demoSettings.retailerId,
+      demoSettings.apiKey
     )
 
     const company = await BridalLiveAPI.fetchBridalLiveCompany(
@@ -39,7 +42,7 @@ export const authenticateDemoAccount = async () => {
     )
     if (!company || !_token)
       throw new Error(
-        `Failed to authenticate demo BridalLive account. Retailer ID: ${BL_DEMO_ACCT_RETAILER_ID}, API Key: ${BL_DEMO_ACCT_API_KEY}`
+        `Failed to authenticate demo BridalLive account. Retailer ID: ${demoSettings.retailerId}, API Key: ${demoSettings.apiKey}`
       )
 
     const demoAccountMsg = `${chalk.bold('BridalLive Demo Account')}\nStore: ${
@@ -61,17 +64,36 @@ export const authenticateDemoAccount = async () => {
   }
 }
 
-export const cleanDemoAccount = async () => {
-  await authenticateDemoAccount()
-  if (demoAccountToken) await clean(demoAccountToken)
+export const cleanDemoAccount = async (
+  demoAccountKey: VALID_DEMO_ACCOUNTS,
+  vendor: number | 'all'
+) => {
+  const demoSettings = BL_DEMO_ACCTS[demoAccountKey]
+  if (demoSettings) {
+    await authenticateDemoAccount(demoSettings)
+    if (demoAccountToken) await clean(demoAccountToken, demoSettings, vendor)
+  } else {
+    logSevereError(`Invalid demo key specified`, {
+      demoAccountKey: demoAccountKey,
+    })
+  }
 }
 
 export const populateDemoAccount = async (
+  demoAccountKey: VALID_DEMO_ACCOUNTS,
   customer: VALID_CUSTOMERS | 'all',
   vendor: number | 'all'
 ) => {
-  await authenticateDemoAccount()
-  if (demoAccountToken) await populate(demoAccountToken, customer, vendor)
+  const demoSettings = BL_DEMO_ACCTS[demoAccountKey]
+  if (demoSettings) {
+    await authenticateDemoAccount(demoSettings)
+    if (demoAccountToken)
+      await populate(demoAccountToken, demoSettings, customer, vendor)
+  } else {
+    logSevereError(`Invalid demo key specified`, {
+      demoAccountKey: demoAccountKey,
+    })
+  }
 }
 
 export const fetch = async (customer: VALID_CUSTOMERS | 'all') => {

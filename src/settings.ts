@@ -1,5 +1,3 @@
-import { BridalCustomerSettings } from './integrations/BridalLive/apiTypes'
-
 export const BL_PROD_ROOT_URL = 'https://app.bridallive.com'
 export const BL_QA_ROOT_URL = 'https://qa.bridallive.com'
 
@@ -9,19 +7,61 @@ export const BL_QA_ROOT_URL = 'https://qa.bridallive.com'
  * key below are associated with Matt Gabor's QA BridalLive account (credentials
  * are stored in 1Password).
  */
-export const BL_DEMO_ACCT_RETAILER_ID = '7f4e8b14'
-export const BL_DEMO_ACCT_API_KEY = 'eeb92d140e9132f4'
-export const BL_DEMO_ACCT_GOWN_DEPT_ID = 15109
-export const BL_DEMO_ACCT_GOWN_DEPT_CODE = 'BG'
-export const BL_DEMO_ACCT_OTHER_DEPT_ID = 15130
-export const BL_DEMO_ACCT_OTHER_DEPT_CODE = 'OTHER'
-export const BL_DEMO_ACCT_TAX_CODE_ID = 2105
-export const BL_DEMO_ACCT_CONTACT_ID = 1057729
-export const BL_DEMO_ACCT_CONTACT_NAME = 'Demo Contact'
-export const BL_DEMO_ACCT_EMPLOYEE_ID = 6625
-export const BL_DEMO_ACCT_EMPLOYEE_NAME = 'Matt Gabor'
-export const BL_DEMO_ACCT_PAYMENT_METHOD_ID = 6369
-export const BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION = 'Cash'
+export interface DemoAccountSettings {
+  retailerId: string
+  apiKey: string //eeb92d140e9132f4',
+  gownDeptId: number //5109,
+  gownDeptCode: string //BG',
+  otherDeptId: number //5130,
+  otherDeptCode: string //OTHER',
+  taxCodeId: number //105,
+  contactId: number //057729,
+  contactName: string //Demo Contact',
+  employeeId: number //625,
+  employeeName: string //Matt Gabor',
+  paymentMethodId: number //369,
+  paymentMethodDescription: string //Cash',
+  accountValidation: {
+    companyName: string //BridalVision Demo Store',
+    emailAddress: string //matt@curiovision.business',
+  }
+}
+export const BL_DEMO_ACCTS: { [demoKey: string]: DemoAccountSettings } = {
+  demo1: {
+    retailerId: '7f4e8b14',
+    apiKey: 'eeb92d140e9132f4',
+    gownDeptId: 15109,
+    gownDeptCode: 'BG',
+    otherDeptId: 15130,
+    otherDeptCode: 'OTHER',
+    taxCodeId: 2105,
+    contactId: 1057729,
+    contactName: 'Demo Contact',
+    employeeId: 6625,
+    employeeName: 'Matt Gabor',
+    paymentMethodId: 6369,
+    paymentMethodDescription: 'Cash',
+    accountValidation: {
+      companyName: 'BridalVision Demo Store',
+      emailAddress: 'matt@curiovision.business',
+    },
+  },
+}
+export type VALID_DEMO_ACCOUNTS = keyof DemoAccountSettings
+
+// export const BL_DEMO_ACCT_RETAILER_ID = '7f4e8b14'
+// export const BL_DEMO_ACCT_API_KEY = 'eeb92d140e9132f4'
+// export const BL_DEMO_ACCT_GOWN_DEPT_ID = 15109
+// export const BL_DEMO_ACCT_GOWN_DEPT_CODE = 'BG'
+// export const BL_DEMO_ACCT_OTHER_DEPT_ID = 15130
+// export const BL_DEMO_ACCT_OTHER_DEPT_CODE = 'OTHER'
+// export const BL_DEMO_ACCT_TAX_CODE_ID = 2105
+// export const BL_DEMO_ACCT_CONTACT_ID = 1057729
+// export const BL_DEMO_ACCT_CONTACT_NAME = 'Demo Contact'
+// export const BL_DEMO_ACCT_EMPLOYEE_ID = 6625
+// export const BL_DEMO_ACCT_EMPLOYEE_NAME = 'Matt Gabor'
+// export const BL_DEMO_ACCT_PAYMENT_METHOD_ID = 6369
+// export const BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION = 'Cash'
 
 /**
  * The following values are checked prior to ANY BridalLive API calls that
@@ -29,10 +69,10 @@ export const BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION = 'Cash'
  * data in any customer BridalLive accounts.
  */
 
-export const BL_DEMO_ACCT_VALIDATION = {
-  companyName: 'BridalVision Demo Store',
-  emailAddress: 'matt@curiovision.business',
-}
+// export const BL_DEMO_ACCT_VALIDATION = {
+//   companyName: 'BridalVision Demo Store',
+//   emailAddress: 'matt@curiovision.business',
+// }
 
 /**
  * Key used to store global debug option.
@@ -47,10 +87,6 @@ export const GLOBAL_DEBUG_KEY = 'demoTools_isDebug'
  */
 export const GLOBAL_IS_CUSTOMER_ACTION_KEY = 'demoTools_isCustomerAction'
 
-interface DemoToolCustomerSettings extends BridalCustomerSettings {
-  vendorIdsToImport: number[]
-}
-
 export const BL_CUSTOMER_ACCTS = {
   customer1: {
     retailerName: 'Heba Adata',
@@ -63,6 +99,11 @@ export const BL_CUSTOMER_ACCTS = {
       42335, // Eddy K
       39736, // Blush by Hayley Paige
       40050, // Kelly Faetanini
+      63215, // Tara Lauren
+      39680, // W-TOO
+      62005, // Allure Romance
+      50739, // Christos
+      72710, // Nicole Spose
     ],
   },
   customer2: {
@@ -74,6 +115,9 @@ export const BL_CUSTOMER_ACCTS = {
       190, // Casablanca
       191, // Justin Alexander
       88573, // Colby John
+      110209, // Rings
+      6652, // Robert Bullock Bride
+      88572, // Lotus Threads
     ],
   },
   customer3: {
@@ -81,7 +125,18 @@ export const BL_CUSTOMER_ACCTS = {
     retailerId: '726804d6',
     apiKey: 'b87c0ff4b4558987',
     gownDeptId: 25897,
-    vendorIdsToImport: [],
+    vendorIdsToImport: [
+      36905, // Anna Campbell
+      55738, // Leanne Marshall
+      88119, // Studio Levana
+      36915, // Theia
+      36903, // Truvelle
+      36908, // Carol Hannah
+      66083, // Rish Bridal
+      80445, // Tara La Tour
+      104454, // White One
+      83315, // Aesling
+    ],
   },
 }
 

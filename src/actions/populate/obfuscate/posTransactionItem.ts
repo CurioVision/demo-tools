@@ -1,6 +1,6 @@
 import { BridalLivePosTransactionLineItem } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo, logWarning } from '../../../logger'
-import { BL_DEMO_ACCT_TAX_CODE_ID } from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import {
   dataIdInDemo,
@@ -8,12 +8,11 @@ import {
   obfuscateBaseBridalLiveData,
 } from './utils'
 
-const StaticValues: Pick<BridalLivePosTransactionLineItem, 'taxCodeId'> = {
-  taxCodeId: BL_DEMO_ACCT_TAX_CODE_ID,
-}
+const StaticValues = {}
 
 const obfuscatePosTransactionLineItem = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   lineItem: BridalLivePosTransactionLineItem
 ) => {
   const originalTrxId = lineItem.transactionId
@@ -68,6 +67,8 @@ const obfuscatePosTransactionLineItem = (
   // replace any identifying values
   logInfo(`...obfuscating pos transaction line item data`)
   lineItem = obfuscateBaseBridalLiveData(lineItem)
+
+  lineItem.taxCodeId = demoSettings.taxCodeId // BL_DEMO_ACCT_TAX_CODE_ID,
 
   // set the new pos transaction id id
   lineItem.transactionId = dataIdInDemo(

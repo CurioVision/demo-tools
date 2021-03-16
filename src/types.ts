@@ -62,7 +62,6 @@ export interface BridalLiveCustomerData {
   attributes: MappedBridalLiveAttributes
   itemImages: MappedBridalLiveItemImages
   payments: MappedBridalLivePayments
-  // contacts: MappedBridalLiveContacts
 }
 
 export type TrackedBridalLiveTypes =

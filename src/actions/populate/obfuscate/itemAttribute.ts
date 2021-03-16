@@ -1,5 +1,6 @@
 import { LookbookAttribute } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
+import { DemoAccountSettings } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import {
   dataIdInDemo,
@@ -11,6 +12,7 @@ const StaticValues = {}
 
 const obfuscateItemAttribute = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   itemAttribute: LookbookAttribute
 ) => {
   // if the corresponding item isn't in demoData, return null so this itemAttribute

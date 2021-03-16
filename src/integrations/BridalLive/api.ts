@@ -4,7 +4,7 @@
 import fetch from 'node-fetch'
 import { logDebug, logError, logInfo, logSevereError } from '../../logger'
 import {
-  BL_DEMO_ACCT_VALIDATION,
+  BL_DEMO_ACCTS,
   BL_PROD_ROOT_URL,
   BL_QA_ROOT_URL,
   GLOBAL_IS_CUSTOMER_ACTION_KEY,
@@ -267,24 +267,29 @@ const safeFetch = (url: string, options: any) => {
   }
 }
 
+const _validDemoAccount = (companyName: string, emailAddress: string) => {
+  const foundIdx = Object.values(BL_DEMO_ACCTS).findIndex(
+    (demoAcct) =>
+      demoAcct.accountValidation.companyName === companyName &&
+      demoAcct.accountValidation.emailAddress === emailAddress
+  )
+  return foundIdx >= 0
+}
+
 const allowMutation = async (rootUrl: BL_ROOT_URL, token: BridalLiveToken) => {
   // only allow a mutation in the QA BridalLive environment
   if (rootUrl !== BL_QA_ROOT_URL) return false
 
   try {
     const company = await fetchBridalLiveCompany(rootUrl, token)
-    const isDemoAccount =
-      company.name === BL_DEMO_ACCT_VALIDATION.companyName &&
-      company.emailAddress === BL_DEMO_ACCT_VALIDATION.emailAddress
-    if (!isDemoAccount) throw new Error()
+    if (!_validDemoAccount(company.name, company.emailAddress))
+      throw new Error()
 
     return true
   } catch (error) {
     logSevereError(
-      `You are attempting to mutate a BridalLive account that DOES NOT match the demo BridalLive account. See 'settings.BL_DEMO_ACCT_VALIDATION'.`,
+      `You are attempting to mutate a BridalLive account that DOES NOT match the demo BridalLive accounts. See 'settings.BL_DEMO_ACCTS'.`,
       {
-        expectedCompanyName: BL_DEMO_ACCT_VALIDATION.companyName,
-        expectedCompanyEmail: BL_DEMO_ACCT_VALIDATION.emailAddress,
         apiRootUrl: rootUrl,
       }
     )

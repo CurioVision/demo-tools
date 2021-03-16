@@ -4,10 +4,7 @@ import {
   BridalLiveReceivingVoucherItem,
 } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
-import {
-  BL_DEMO_ACCT_EMPLOYEE_ID,
-  BL_DEMO_ACCT_EMPLOYEE_NAME,
-} from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import {
   BridalLiveDemoData,
   MappedBridalLiveReceivingVoucherItems,
@@ -21,15 +18,8 @@ import {
 
 const StaticValues: Pick<
   BridalLiveReceivingVoucher,
-  | 'employeeId'
-  | 'employeeName'
-  | 'qbTxnId'
-  | 'qboExportDateTime'
-  | 'qbEditSequence'
-  | 'invoiceNumber'
+  'qbTxnId' | 'qboExportDateTime' | 'qbEditSequence' | 'invoiceNumber'
 > = {
-  employeeId: BL_DEMO_ACCT_EMPLOYEE_ID,
-  employeeName: BL_DEMO_ACCT_EMPLOYEE_NAME,
   qbTxnId: null,
   qbEditSequence: null,
   qboExportDateTime: null,
@@ -38,6 +28,7 @@ const StaticValues: Pick<
 
 const obfuscateReceivingVoucher = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   originalReceivingVoucherId: string,
   receivingVoucher: BridalLiveReceivingVoucher,
   allLineItems: MappedBridalLiveReceivingVoucherItems
@@ -73,6 +64,9 @@ const obfuscateReceivingVoucher = (
   // replace any identifying values
   logInfo(`...obfuscating receiving voucher data`)
   receivingVoucher = obfuscateBaseBridalLiveData(receivingVoucher)
+
+  receivingVoucher.employeeId = demoSettings.employeeId // BL_DEMO_ACCT_EMPLOYEE_ID,
+  receivingVoucher.employeeName = demoSettings.employeeName // BL_DEMO_ACCT_EMPLOYEE_NAME,
 
   // obfuscate dates
   receivingVoucher.receiveDate = obfuscateDateAsBridalLiveString(

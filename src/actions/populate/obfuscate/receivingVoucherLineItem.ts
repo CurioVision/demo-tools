@@ -1,9 +1,6 @@
 import { BridalLiveReceivingVoucherItem } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo, logWarning } from '../../../logger'
-import {
-  BL_DEMO_ACCT_CONTACT_ID,
-  BL_DEMO_ACCT_CONTACT_NAME,
-} from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import { dataWasAddedToDemo, obfuscateBaseBridalLiveData } from './utils'
 
@@ -20,6 +17,7 @@ const StaticValues: Pick<
 
 const obfuscateReceivingVoucherLineItem = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   lineItem: BridalLiveReceivingVoucherItem
 ) => {
   console.log(demoData.receivingVouchers[lineItem.receivingVoucherId])
@@ -72,8 +70,8 @@ const obfuscateReceivingVoucherLineItem = (
     demoData.purchaseOrderItems[originalPurchaseOrderItemId].newId
 
   // only obfuscate contact data if it was already set
-  if (lineItem.contactId) lineItem.contactId = BL_DEMO_ACCT_CONTACT_ID
-  if (lineItem.contactName) lineItem.contactName = BL_DEMO_ACCT_CONTACT_NAME
+  if (lineItem.contactId) lineItem.contactId = demoSettings.contactId
+  if (lineItem.contactName) lineItem.contactName = demoSettings.contactName
 
   return {
     ...lineItem,

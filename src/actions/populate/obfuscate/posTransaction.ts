@@ -4,12 +4,7 @@ import {
   BridalLivePosTransactionLineItem,
 } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
-import {
-  BL_DEMO_ACCT_CONTACT_ID,
-  BL_DEMO_ACCT_CONTACT_NAME,
-  BL_DEMO_ACCT_EMPLOYEE_ID,
-  BL_DEMO_ACCT_EMPLOYEE_NAME,
-} from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import {
   BridalLiveDemoData,
   MappedBridalLivePosTransactionItems,
@@ -22,10 +17,6 @@ import {
 
 const StaticValues: Pick<
   BridalLivePosTransaction,
-  | 'employeeId'
-  | 'employeeName'
-  | 'contactId'
-  | 'contactName'
   | 'contactPhone'
   | 'eventId'
   | 'qbEditSequence'
@@ -39,10 +30,6 @@ const StaticValues: Pick<
   | 'shipToZip'
   | 'linkedTransactionId'
 > = {
-  employeeId: BL_DEMO_ACCT_EMPLOYEE_ID,
-  employeeName: BL_DEMO_ACCT_EMPLOYEE_NAME,
-  contactId: BL_DEMO_ACCT_CONTACT_ID,
-  contactName: BL_DEMO_ACCT_CONTACT_NAME,
   contactPhone: null,
   eventId: null,
   qbEditSequence: null,
@@ -59,6 +46,7 @@ const StaticValues: Pick<
 
 const obfuscatePosTransaction = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   originalPosTransactionId: string,
   posTransaction: BridalLivePosTransaction,
   allLineItems: MappedBridalLivePosTransactionItems
@@ -90,6 +78,11 @@ const obfuscatePosTransaction = (
   // replace any identifying values
   logInfo(`...obfuscating purchase order data`)
   posTransaction = obfuscateBaseBridalLiveData(posTransaction)
+
+  posTransaction.employeeId = demoSettings.employeeId // BL_DEMO_ACCT_EMPLOYEE_ID,
+  posTransaction.employeeName = demoSettings.employeeName // BL_DEMO_ACCT_EMPLOYEE_NAME,
+  posTransaction.contactId = demoSettings.contactId // BL_DEMO_ACCT_CONTACT_ID,
+  posTransaction.contactName = demoSettings.contactName // BL_DEMO_ACCT_CONTACT_NAME,
 
   // obfuscate dates
   posTransaction.orderDate = obfuscateDateAsBridalLiveString(

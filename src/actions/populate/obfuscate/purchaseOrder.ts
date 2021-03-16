@@ -1,10 +1,7 @@
 import { DataWithLineItems } from '..'
 import { BridalLivePurchaseOrder } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
-import {
-  BL_DEMO_ACCT_EMPLOYEE_ID,
-  BL_DEMO_ACCT_EMPLOYEE_NAME,
-} from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import {
   BridalLiveDemoData,
   MappedBridalLivePurchaseOrderItems,
@@ -18,15 +15,8 @@ import {
 
 const StaticValues: Pick<
   BridalLivePurchaseOrder,
-  | 'employeeId'
-  | 'employeeName'
-  | 'eventDate'
-  | 'eventContactId'
-  | 'eventContactName'
-  | 'purchaseOrderNumber'
+  'eventDate' | 'eventContactId' | 'eventContactName' | 'purchaseOrderNumber'
 > = {
-  employeeId: BL_DEMO_ACCT_EMPLOYEE_ID,
-  employeeName: BL_DEMO_ACCT_EMPLOYEE_NAME,
   eventDate: null,
   eventContactId: null,
   eventContactName: null,
@@ -35,6 +25,7 @@ const StaticValues: Pick<
 
 const obfuscatePurchaseOrder = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   originalPurchaseOrderId: string,
   purchaseOrder: BridalLivePurchaseOrder,
   allLineItems: MappedBridalLivePurchaseOrderItems
@@ -73,6 +64,9 @@ const obfuscatePurchaseOrder = (
   // replace any identifying values
   logInfo(`...obfuscating purchase order data`)
   purchaseOrder = obfuscateBaseBridalLiveData(purchaseOrder)
+
+  purchaseOrder.employeeId = demoSettings.employeeId // BL_DEMO_ACCT_EMPLOYEE_ID,
+  purchaseOrder.employeeName = demoSettings.employeeName // BL_DEMO_ACCT_EMPLOYEE_NAME,
 
   // obfuscate dates
   purchaseOrder.orderDate = obfuscateDateAsBridalLiveString(

@@ -1,11 +1,6 @@
 import { BridalLivePayment } from '../../../integrations/BridalLive/apiTypes'
 import { logInfo } from '../../../logger'
-import {
-  BL_DEMO_ACCT_EMPLOYEE_ID,
-  BL_DEMO_ACCT_EMPLOYEE_NAME,
-  BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION,
-  BL_DEMO_ACCT_PAYMENT_METHOD_ID,
-} from '../../../settings'
+import { DemoAccountSettings } from '../../../settings'
 import { BridalLiveDemoData } from '../../../types'
 import {
   dataIdInDemo,
@@ -14,18 +9,7 @@ import {
   obfuscateDateAsBridalLiveString,
 } from './utils'
 
-const StaticValues: Pick<
-  BridalLivePayment,
-  | 'employeeId'
-  | 'employeeName'
-  | 'methodId'
-  | 'methodDescription'
-  | 'registerId'
-> = {
-  employeeId: BL_DEMO_ACCT_EMPLOYEE_ID,
-  employeeName: BL_DEMO_ACCT_EMPLOYEE_NAME,
-  methodId: BL_DEMO_ACCT_PAYMENT_METHOD_ID,
-  methodDescription: BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION,
+const StaticValues: Pick<BridalLivePayment, 'registerId'> = {
   registerId: 0,
 }
 
@@ -36,6 +20,7 @@ export interface BridalLivePaymentObfuscationData {
 
 const obfuscatePayment = (
   demoData: BridalLiveDemoData,
+  demoSettings: DemoAccountSettings,
   payment: BridalLivePayment
 ): BridalLivePaymentObfuscationData => {
   const originalTrxId = payment.transactionId
@@ -67,6 +52,12 @@ const obfuscatePayment = (
 
   // set the new pos transaction id id
   payment.transactionId = demoDataTransactionId
+
+  // set new demo account values
+  payment.employeeId = demoSettings.employeeId // BL_DEMO_ACCT_EMPLOYEE_ID,
+  payment.employeeName = demoSettings.employeeName // BL_DEMO_ACCT_EMPLOYEE_NAME,
+  payment.methodId = demoSettings.paymentMethodId // BL_DEMO_ACCT_PAYMENT_METHOD_ID,
+  payment.methodDescription = demoSettings.paymentMethodDescription // BL_DEMO_ACCT_PAYMENT_METHOD_DESCRIPTION,
 
   return {
     cleanData: {
