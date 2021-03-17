@@ -27,6 +27,7 @@ export interface DemoAccountSettings {
   }
 }
 export const BL_DEMO_ACCTS: { [demoKey: string]: DemoAccountSettings } = {
+  // Matt Gabor demo account in BridalLive QA
   demo1: {
     retailerId: '7f4e8b14',
     apiKey: 'eeb92d140e9132f4',
@@ -44,6 +45,26 @@ export const BL_DEMO_ACCTS: { [demoKey: string]: DemoAccountSettings } = {
     accountValidation: {
       companyName: 'BridalVision Demo Store',
       emailAddress: 'matt@curiovision.business',
+    },
+  },
+  // Jay Tavares demo account in BridalLive QA
+  demo2: {
+    retailerId: 'b1375a79',
+    apiKey: '8f3023e5d81ea4a4',
+    gownDeptId: 15375,
+    gownDeptCode: 'BG',
+    otherDeptId: 15376,
+    otherDeptCode: 'OTHER',
+    taxCodeId: 2113,
+    contactId: 1057740,
+    contactName: 'Demo Customer',
+    employeeId: 6650,
+    employeeName: 'Jay Tavares',
+    paymentMethodId: 6471,
+    paymentMethodDescription: 'Cash',
+    accountValidation: {
+      companyName: 'BridalVision Demo 2 Store',
+      emailAddress: 'jay@curiovision.com',
     },
   },
 }
