@@ -1,6 +1,6 @@
 import boxen from 'boxen'
 import chalk from 'chalk'
-import clean from './actions/clean2'
+import clean from './actions/clean'
 import fetchCustomerData from './actions/fetchCustomerData'
 import populate from './actions/populate'
 import BridalLiveAPI from './integrations/BridalLive/api'
@@ -73,9 +73,12 @@ export const cleanDemoAccount = async (
     await authenticateDemoAccount(demoSettings)
     if (demoAccountToken) await clean(demoAccountToken, demoSettings, vendor)
   } else {
-    logSevereError(`Invalid demo key specified`, {
-      demoAccountKey: demoAccountKey,
-    })
+    logSevereError(
+      `Invalid demo key specified. See settings.ts for valid demo accounts.`,
+      {
+        demoAccountKey: demoAccountKey,
+      }
+    )
   }
 }
 
@@ -90,9 +93,12 @@ export const populateDemoAccount = async (
     if (demoAccountToken)
       await populate(demoAccountToken, demoSettings, customer, vendor)
   } else {
-    logSevereError(`Invalid demo key specified`, {
-      demoAccountKey: demoAccountKey,
-    })
+    logSevereError(
+      `Invalid demo key specified. See settings.ts for valid demo accounts.`,
+      {
+        demoAccountKey: demoAccountKey,
+      }
+    )
   }
 }
 

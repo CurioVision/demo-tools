@@ -1,5 +1,6 @@
 import fs from 'fs'
 import BridalLiveAPI, {
+  DeleteFunction,
   FetchAllFunction,
 } from '../../integrations/BridalLive/api'
 import {
@@ -141,7 +142,7 @@ const cleanBridalLiveDemoAccount = async (
         }`
       )
     } else {
-      logSuccess(`...vendor used for filtering: ALL`)
+      logSuccess(`...vendor used for filtering: ${vendorToClean}`)
     }
 
     const filteredItems = await filterItems(vendorToClean, items)
@@ -199,31 +200,140 @@ const cleanBridalLiveDemoAccount = async (
       filteredPosTransactions as MappedBridalLivePosTransactions
     )
 
-    _writeDataFile('./data/temp/vendors.json', filteredVendors)
-    _writeDataFile('./data/temp/items.json', filteredItems)
-    _writeDataFile('./data/temp/itemImages.json', filteredItemImages)
-    _writeDataFile('./data/temp/attributes.json', filteredAttributes)
-    _writeDataFile('./data/temp/purchaseOrders.json', filteredPurchaseOrders)
-    _writeDataFile(
-      './data/temp/purchaseOrderLineItems.json',
-      filteredPurchaseOrderLineItems
+    // fetch and delete purchase orders
+    await deleteData(
+      'purchaseOrder',
+      demoAccounttoken,
+      Object.values(filteredPurchaseOrders),
+      BridalLiveAPI.deletePurchaseOrder
     )
-    _writeDataFile(
-      './data/temp/receivingVouchers.json',
-      filteredReceivingVouchers
+    // fetch and delete purchase orders items
+    await deleteData(
+      'purchaseOrderItem',
+      demoAccounttoken,
+      Object.values(filteredPurchaseOrderLineItems),
+      BridalLiveAPI.deletePurchaseOrderItem
     )
-    _writeDataFile(
-      './data/temp/receivingVoucherLineItems.json',
-      filteredReceivingVoucherLineItems
+    // fetch and delete receiving orders
+    await deleteData(
+      'receivingVoucher',
+      demoAccounttoken,
+      Object.values(filteredReceivingVouchers),
+      BridalLiveAPI.deleteReceivingVoucher
     )
-    _writeDataFile('./data/temp/posTransactions.json', filteredPosTransactions)
-    _writeDataFile(
-      './data/temp/posTransactionLineItems.json',
-      filteredPosTransactionLineItems
+    // fetch and delete receiving order items
+    await deleteData(
+      'receivingVoucherItem',
+      demoAccounttoken,
+      Object.values(filteredReceivingVoucherLineItems),
+      BridalLiveAPI.deleteReceivingVoucherItem
     )
-    _writeDataFile('./data/temp/payments.json', filteredPayments)
+    // fetch and delete payments
+    await deleteData(
+      'payment',
+      demoAccounttoken,
+      Object.values(filteredPayments),
+      BridalLiveAPI.deletePayment
+    )
+    // fetch and delete pos transactions
+    await deleteData(
+      'posTransaction',
+      demoAccounttoken,
+      Object.values(filteredPosTransactions),
+      BridalLiveAPI.deletePosTransaction
+    )
+    // fetch and delete pos transaction items
+    await deleteData(
+      'posTransactionItem',
+      demoAccounttoken,
+      Object.values(filteredPosTransactionLineItems),
+      BridalLiveAPI.deletePosTransactionItem
+    )
+
+    // fetch and delete itemImages
+    await deleteData(
+      'itemImage',
+      demoAccounttoken,
+      Object.values(filteredItemImages),
+      BridalLiveAPI.deleteItemImage
+    )
+    // fetch and delete attributes
+    // await deleteData(
+    //   'attribute',
+    //   demoAccounttoken,
+    //   Object.values(filteredAttributes),
+    //   BridalLiveAPI.deleteAttribute
+    // )
+    // fetch and delete items
+    await deleteData(
+      'item',
+      demoAccounttoken,
+      Object.values(filteredItems),
+      BridalLiveAPI.deleteItem
+    )
+    // fetch and delete vendors
+    await deleteData(
+      'vendor',
+      demoAccounttoken,
+      Object.values(filteredVendors),
+      BridalLiveAPI.deleteVendor
+    )
+
+    // _writeDataFile('./data/temp/vendors.json', filteredVendors)
+    // _writeDataFile('./data/temp/items.json', filteredItems)
+    // _writeDataFile('./data/temp/itemImages.json', filteredItemImages)
+    // _writeDataFile('./data/temp/attributes.json', filteredAttributes)
+    // _writeDataFile('./data/temp/purchaseOrders.json', filteredPurchaseOrders)
+    // _writeDataFile(
+    //   './data/temp/purchaseOrderLineItems.json',
+    //   filteredPurchaseOrderLineItems
+    // )
+    // _writeDataFile(
+    //   './data/temp/receivingVouchers.json',
+    //   filteredReceivingVouchers
+    // )
+    // _writeDataFile(
+    //   './data/temp/receivingVoucherLineItems.json',
+    //   filteredReceivingVoucherLineItems
+    // )
+    // _writeDataFile('./data/temp/posTransactions.json', filteredPosTransactions)
+    // _writeDataFile(
+    //   './data/temp/posTransactionLineItems.json',
+    //   filteredPosTransactionLineItems
+    // )
+    // _writeDataFile('./data/temp/payments.json', filteredPayments)
   } catch (error) {
     logError('Error occurred while cleaning BridalLive demo account', error)
+  }
+}
+
+const deleteData = async (
+  itemType: string,
+  token: BridalLiveToken,
+  items: BaseBridalLiveObject[],
+  deleteFn: DeleteFunction
+) => {
+  // fetch and delete items
+  logInfo('')
+  if (items && items.length > 0) {
+    logInfo(`...found ${items.length} ${itemType}s that need to be deleted`)
+  } else {
+    logSuccess(`...No ${itemType}s need to be deleted`)
+  }
+  for await (const item of items) {
+    try {
+      logInfo(
+        `\tAttempting to delete ${itemType} with id: ${item.id} ${
+          Object.hasOwnProperty('name') && item['name']
+            ? `with name: ${item['name']}`
+            : ''
+        }`
+      )
+      await deleteFn(BL_QA_ROOT_URL, token, item.id)
+      logSuccess(`\t...Deleted ${item.id}`)
+    } catch (error) {
+      logError(`Error while deleting ${itemType}`, error)
+    }
   }
 }
 
