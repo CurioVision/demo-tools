@@ -1,6 +1,18 @@
-# demo-tools
+# How to use demo-tools
 
-- Clean demo BridalLive account: `npm run demo:clean`
+## To refresh data in main demo BridalLive account ("demo1" = Matt Gabor demo account in BridalLive QA):
+### Fetch fresh BridalLive customer data
+- `ts-node src/bin/demo.bin.ts fetch --debug -c customer1`
+- `ts-node src/bin/demo.bin.ts fetch --debug -c customer2`
+- `ts-node src/bin/demo.bin.ts fetch --debug -c customer3`
+
+### Clean the "demo1" account for all vendors
+- `ts-node src/bin/demo.bin.ts clean --debug -da demo1 -v all`
+
+### Clean the "demo1" account with data from each customer
+- `ts-node src/bin/demo.bin.ts populate --debug -da demo1 -c customer1 -v all`
+- `ts-node src/bin/demo.bin.ts populate --debug -da demo1 -c customer2 -v all`
+- `ts-node src/bin/demo.bin.ts populate --debug -da demo1 -c customer3 -v all`
 
 ## import notes
 

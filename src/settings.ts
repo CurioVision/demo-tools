@@ -39,7 +39,7 @@ export const BL_DEMO_ACCTS: { [demoKey: string]: DemoAccountSettings } = {
     contactId: 1057729,
     contactName: 'Demo Contact',
     employeeId: 6625,
-    employeeName: 'Matt Gabor',
+    employeeName: 'Demo Employee',
     paymentMethodId: 6369,
     paymentMethodDescription: 'Cash',
     accountValidation: {
@@ -65,6 +65,26 @@ export const BL_DEMO_ACCTS: { [demoKey: string]: DemoAccountSettings } = {
     accountValidation: {
       companyName: 'BridalVision Demo 2 Store',
       emailAddress: 'jay@curiovision.com',
+    },
+  },
+  // Ingrid Heilke demo account in BridalLive QA
+  demo3: {
+    retailerId: '05716f6b',
+    apiKey: 'a6623ec6bcf46094',
+    gownDeptId: 16681,
+    gownDeptCode: 'BG',
+    otherDeptId: 16696,
+    otherDeptCode: 'OTHER',
+    taxCodeId: 2117,
+    contactId: 1057763,
+    contactName: 'Demo Customer',
+    employeeId: 6750,
+    employeeName: 'Ingrid Heilke',
+    paymentMethodId: 6995,
+    paymentMethodDescription: 'Cash',
+    accountValidation: {
+      companyName: "Ingrid's Bridal Store",
+      emailAddress: 'ingrid@curiovision.business',
     },
   },
 }

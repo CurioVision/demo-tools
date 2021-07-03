@@ -5,7 +5,7 @@ import { cleanDemoAccount, fetch, populateDemoAccount } from '../main'
 import {
   CUSTOMER_DATA_DIR,
   GLOBAL_DEBUG_KEY,
-  GLOBAL_IS_CUSTOMER_ACTION_KEY,
+  GLOBAL_IS_CUSTOMER_ACTION_KEY
 } from '../settings'
 
 // make sure  GLOBAL_IS_CUSTOMER_ACTION_KEY defaults to false
@@ -19,6 +19,10 @@ const setGlobalDebug = (debug) => {
 
 program.version(packgeJSON.version)
 
+/** NOTE: Doing everything in a single command is not implemented yet.
+ * 
+ * @see /src/actions/populate/index.ts for comments about 'all' command
+ */
 program
   .command('all')
   .description(
@@ -68,7 +72,7 @@ program
   )
   .requiredOption(
     '-v, --vendor <string>',
-    'Specifies the vendor ID to populate. See settings.ts for valid vendor IDs for each customer'
+    'Specifies the vendor ID to populate. See settings.ts for valid vendor IDs for each customer. Use "all" to populate all vendors in the customer data.'
   )
   .action(({ debug, demoAccount, customer, vendor }) => {
     setGlobalDebug(debug)
